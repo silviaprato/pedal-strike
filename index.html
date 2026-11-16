@@ -138,7 +138,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <!-- ============ HOME ============ -->
 <section id="home" class="screen on"><div class="wrap">
   <div class="logo">PEDAL//STRIKE</div>
-  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v2.1</span></div>
+  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v2.2</span></div>
   <div id="btWarn"></div>
   <div class="grid g2">
     <div class="card">
@@ -296,11 +296,13 @@ button{font:inherit;color:inherit;cursor:pointer}
   </div>
   <canvas id="chart"></canvas>
   <div class="ctrls">
-    <button id="bPause">⏸</button><button id="bMinus">−</button><span id="bias">0%</span><button id="bPlus">+</button><button id="bSkip">⏭</button><button id="bEnd">✖ Fine</button><button id="bMus" title="Musica">🎵</button><button id="bSfx" title="Effetti">🔊</button>
+    <button id="bPause">⏸</button><button id="bMinus">−</button><span id="bias">0%</span><button id="bPlus">+</button><button id="bSkip">⏭</button><button id="bEnd">✖ Fine</button><button id="bMus" title="Musica">🎵</button><button id="bSfx" title="Effetti">🔊</button><button id="bDiag" title="Verifica dati">📊</button>
   </div>
   <div class="pad">
     <button data-k="C">C<i>Y</i></button><button data-k="D">D<i>Z</i></button><button data-k="A">A</button><button data-k="B">B</button>
   </div>
+  <div id="demoBan" style="display:none;position:absolute;left:50%;transform:translateX(-50%);top:calc(max(10px,env(safe-area-inset-top)) + 150px);background:#ffd93a;color:#140a28;font-weight:800;padding:8px 16px;border-radius:12px;font-size:17px;text-align:center;box-shadow:0 0 20px #ffd93a88;pointer-events:none">⚠️ DEMO: rulli NON collegati — i watt sono simulati e copiano l'obiettivo</div>
+  <div id="diag" style="display:none;position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(10px,env(safe-area-inset-top)) + 140px);background:#0b0618ee;border:1px solid var(--cyan);border-radius:12px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;line-height:1.5;white-space:pre;z-index:4"></div>
   <div id="toast"></div>
   <div class="ovl" id="ovl"><div id="ovlIn"></div></div>
 </section>
@@ -447,7 +449,7 @@ function setSfx(on){SET.sfx=on;saveSet();updAudioBtns()}
 function updAudioBtns(){if($('#bMus'))$('#bMus').style.opacity=SET.music?1:.4;if($('#bSfx'))$('#bSfx').style.opacity=SET.sfx?1:.4}
 
 /* =================== BLUETOOTH =================== */
-const live={power:0,pTs:0,cad:0,cTs:0,hr:0,hTs:0,speed:0,crank:null};
+const live={power:0,pTs:0,cad:0,cTs:0,hr:0,hTs:0,speed:0,crank:null,nIBD:0,nCPM:0,src:''};
 const BLE={trainer:null,cp:null,trainerOK:false,hrDev:null,zw:[],queue:Promise.resolve(),lastErg:null,lastGrade:null,hasIBDpower:false};
 function log(m){const el=$('#log');const t=new Date().toLocaleTimeString();el.textContent=(`[${t}] ${m}\n`+el.textContent).slice(0,6000)}
 const hex=u8=>[...u8].map(b=>b.toString(16).padStart(2,'0')).join(' ');
@@ -485,7 +487,7 @@ async function setupTrainer(dev){
     try{const ibd=await ftms.getCharacteristic(IBD);await ibd.startNotifications();
       ibd.addEventListener('characteristicvaluechanged',e=>onIBD(e.target.value));log('Indoor Bike Data attivo')}catch(e){log('IBD: '+e.message)}
     try{const cp=await ftms.getCharacteristic(FTMS_CP);
-      try{await cp.startNotifications();cp.addEventListener('characteristicvaluechanged',e=>{const u=u8of(e.target.value);if(u[0]===0x80&&u[2]!==1)log('CP risposta op '+u[1]+' esito '+u[2])})}catch(e){}
+      try{await cp.startNotifications();cp.addEventListener('characteristicvaluechanged',e=>{const u=u8of(e.target.value);if(u[0]===0x80){BLE.cpResp={op:u[1],res:u[2],t:Date.now()};if(u[2]!==1)log('CP risposta op '+u[1]+' esito '+u[2])}})}catch(e){}
       BLE.cp=cp;await writeChar(cp,[0x00]);await writeChar(cp,[0x07]);BLE.lastErg=null;BLE.lastGrade=null;log('Controllo rulli acquisito (ERG/SIM)')}catch(e){log('Control point: '+e.message)}
   }
   if(cps){
@@ -495,20 +497,20 @@ async function setupTrainer(dev){
   BLE.trainerOK=true;
   setChip('#stTrainer','on',(dev.name||'Rulli')+(BLE.cp?' · ERG ✓':' · solo lettura'));
 }
-function onIBD(dv){
+function onIBD(dv){live.nIBD++;
   try{let o=2;const f=dv.getUint16(0,true),n=dv.byteLength,now=Date.now();
     if(!(f&1)){if(o+2<=n)live.speed=dv.getUint16(o,true)/100;o+=2}
     if(f&2)o+=2;
     if(f&4){if(o+2<=n){live.cad=dv.getUint16(o,true)/2;live.cTs=now}o+=2}
     if(f&8)o+=2; if(f&16)o+=3; if(f&32)o+=2;
-    if(f&64){if(o+2<=n){live.power=Math.max(0,dv.getInt16(o,true));live.pTs=now;BLE.hasIBDpower=true}o+=2}
+    if(f&64){if(o+2<=n){live.power=Math.max(0,dv.getInt16(o,true));live.pTs=now;BLE.hasIBDpower=true;live.src='FTMS'}o+=2}
     if(f&128)o+=2; if(f&256)o+=5;
     if(f&512&&o<n&&!(BLE.hrDev&&now-live.hTs<4000)){const h=dv.getUint8(o);if(h>0){live.hr=h;live.hTs=now}}
   }catch(e){}
 }
-function onCPM(dv){
+function onCPM(dv){live.nCPM++;
   try{const f=dv.getUint16(0,true),now=Date.now();let o=4;
-    if(!BLE.hasIBDpower){live.power=Math.max(0,dv.getInt16(2,true));live.pTs=now}
+    if(!BLE.hasIBDpower){live.power=Math.max(0,dv.getInt16(2,true));live.pTs=now;live.src='Cycling Power'}
     if(f&1)o+=1;if(f&4)o+=2;if(f&16)o+=6;
     if(f&32&&dv.byteLength>=o+4){const revs=dv.getUint16(o,true),t=dv.getUint16(o+2,true),p=live.crank;
       if(p&&t!==p.t){const dr=(revs-p.revs)&0xffff,dt=((t-p.t)&0xffff)/1024;if(dt>0&&dr<10){const c=dr/dt*60;if(c<200&&(now-live.cTs>1500||!BLE.hasIBDpower)){live.cad=c;live.cTs=now}}}
@@ -533,7 +535,7 @@ async function setupHR(dev){
 }
 async function onDisc(kind){
   const dev=kind==='trainer'?BLE.trainer:BLE.hrDev;if(!dev)return;
-  if(kind==='trainer'){BLE.trainerOK=false;BLE.cp=null}
+  if(kind==='trainer'){BLE.trainerOK=false;BLE.cp=null;if(G&&!G.ended)toast('⚠️ RULLI SCOLLEGATI','Riconnessione in corso…')}
   setChip(kind==='trainer'?'#stTrainer':'#stHr','wait','Riconnessione…');log(kind+' disconnesso, riprovo…');
   for(let i=0;i<6;i++){await new Promise(r=>setTimeout(r,1500+i*1000));
     try{if(kind==='trainer')await setupTrainer(dev);else await setupHR(dev);return}catch(e){log('Tentativo '+(i+1)+' fallito')}}
@@ -902,7 +904,19 @@ function badge(id){if(!profile.badges[id]){profile.badges[id]=Date.now();const b
 function showOvl(h){$('#ovlIn').innerHTML=h;$('#ovl').classList.add('on')}function hideOvl(){$('#ovl').classList.remove('on')}
 
 /* ---- HUD ---- */
-function updHUD(){const p=Math.round(G.p3||G.cur.p||0);
+function updDiag(){const d=$('#diag');if(!d||d.style.display==='none'||!G)return;const now=Date.now(),age=t=>t?((now-t)/1000).toFixed(1)+' s fa':'mai';
+  const r=BLE.cpResp,res=r?({1:'OK ✓',2:'non supportato',3:'parametro non valido',4:'fallito',5:'controllo negato'}[r.res]||'esito '+r.res):'—';
+  d.textContent=[`VERIFICA DATI ${BLE.trainerOK?'':'— ⚠️ DEMO (dati finti)'}`,
+   `Fonte potenza : ${BLE.trainerOK?(live.src||'in attesa…'):'SIMULATA'}`,
+   `Watt istant.  : ${BLE.trainerOK?live.power+' W':'—'}  (ultimo dato ${age(live.pTs)})`,
+   `Watt media 3s : ${Math.round(G.p3||0)} W`,
+   `Cadenza       : ${BLE.trainerOK?Math.round(live.cad)+' rpm':'—'}  (${age(live.cTs)})`,
+   `Vel. ruota    : ${BLE.trainerOK?live.speed.toFixed(1)+' km/h':'—'}`,
+   `Pacchetti     : FTMS ${live.nIBD} · CPS ${live.nCPM}`,
+   `Comando rulli : ${BLE.cp?(G.free?'SIM pendenza '+((BLE.lastGrade||0)/100).toFixed(1)+'%':'ERG '+(BLE.lastErg??'—')+' W'):'nessuno'}`,
+   `Risposta rulli: ${res}${r?' ('+age(r.t)+')':''}`,
+   `Cardio        : ${now-live.hTs<5000?live.hr+' bpm ('+age(live.hTs)+')':'—'}`].join('\n')}
+function updHUD(){updDiag();$('#demoBan').style.display=BLE.trainerOK?'none':'block';const p=Math.round(G.p3||G.cur.p||0);
   $('#hPow').textContent=p;$('#hPow').style.color=zoneOf(p/profile.ftp).c;
   $('#hCad').textContent=Math.round(G.cur.cad||0);$('#hHr').textContent=G.cur.hr||'--';$('#hSpd').textContent=(G.v*3.6).toFixed(1);
   $('#hScore').textContent=G.score.toLocaleString('it-IT');$('#hMult').textContent=`x${mult()} · combo ${G.combo}`;
@@ -1063,7 +1077,7 @@ function togglePause(){if(!G||!G.started||G.ended)return;G.paused=!G.paused;if(G
   else hideOvl()}
 function bump(d){if(!G)return;if(G.free){G.diff=clamp(G.diff+d*10,0,100);$('#bias').textContent='Salite '+G.diff+'%';BLE.lastGrade=null}
   else{G.bias=clamp(G.bias+d*5,-30,30);$('#bias').textContent=(G.bias>0?'+':'')+G.bias+'%';if(G.T){G.tw=tgtW(G.T.pct);ftmsErg(G.tw)}}}
-$('#bPause').onclick=togglePause;$('#bMus').onclick=()=>setMusic(!SET.music);$('#bSfx').onclick=()=>setSfx(!SET.sfx);updAudioBtns();$('#bPlus').onclick=()=>bump(1);$('#bMinus').onclick=()=>bump(-1);
+$('#bPause').onclick=togglePause;$('#bDiag').onclick=()=>{const d=$('#diag');d.style.display=d.style.display==='none'?'block':'none';updDiag()};$('#bMus').onclick=()=>setMusic(!SET.music);$('#bSfx').onclick=()=>setSfx(!SET.sfx);updAudioBtns();$('#bPlus').onclick=()=>bump(1);$('#bMinus').onclick=()=>bump(-1);
 $('#bSkip').onclick=()=>{if(G&&G.T&&!G.free){G.t=G.T.start+G.T.seg.d+.01}};
 $('#bEnd').onclick=()=>{if(!G||G.ended)return;const wasP=G.paused;G.paused=true;askConfirm(G.wk&&G.wk.ramp?'Terminare il test? La FTP verrà calcolata con i dati raccolti.':'Terminare la sessione?',()=>finish(!!(G.wk&&G.wk.ramp)));$('#cNo').onclick=()=>{$('#modal').classList.remove('on');if(G)G.paused=wasP}};
 $$('.pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();SFX.init();fire(b.dataset.k)}));
