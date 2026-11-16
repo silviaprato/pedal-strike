@@ -138,7 +138,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <!-- ============ HOME ============ -->
 <section id="home" class="screen on"><div class="wrap">
   <div class="logo">PEDAL//STRIKE</div>
-  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v2.2</span></div>
+  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v2.3</span></div>
   <div id="btWarn"></div>
   <div class="grid g2">
     <div class="card">
@@ -292,6 +292,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div id="hScore">0</div><div id="hMult">x1</div>
     <div class="energy" id="hEnergy"><div></div></div>
     <div style="font-size:15px" id="hTime">0:00 · 0.0 km</div>
+    <div id="hGhost" style="font-size:16px;font-weight:700;margin-top:4px"></div>
     <div style="font-size:13px" class="mut" id="hMode"></div>
   </div>
   <canvas id="chart"></canvas>
@@ -799,6 +800,11 @@ function startRide(wk){
   $('#hMode').textContent=(BLE.trainerOK?(BLE.cp?(G.free?'SIM':'ERG'):'Rulli'):'DEMO')+(G.free?' · Giro libero':' · '+wk.name);
   $('#bossBar').style.display='none';
   if(!G.free){G.T=targetAt(0);G.tw=tgtW(G.T.pct);if(BLE.cp)ftmsErg(G.tw)}else if(BLE.cp)ftmsSim(0);
+  G.gd=0;G.gv=0;G.ghost=null;G.ghostAhead=null;
+  if(!G.free)G.ghost={type:'wk'};
+  else if(profile.ghostFree&&profile.ghostFree.trace&&profile.ghostFree.trace.length>2)G.ghost={type:'free',...profile.ghostFree};
+  setTimeout(()=>{if(!G||G.ended)return;if(G.ghost)toast('👻 FANTASMA IN PISTA',G.free?`Il tuo record: ${(G.ghost.dist/1000).toFixed(2)} km in ${fmt(G.ghost.dur)}`:'Pedala esattamente come l\'allenamento: stagli dietro!');
+    else toast('👻 Nessun fantasma ancora','Fai almeno 5 minuti: questo giro diventa il tuo fantasma')},3600);
   countdown();requestAnimationFrame(loop)}
 function countdown(){let n=3;const o=$('#ovl');o.classList.add('on');
   const step=()=>{if(!G)return;if(n>0){$('#ovlIn').innerHTML=`<div class="big">${n}</div><div style="font-size:20px">${G.free?'Giro libero · salite sentite al 50% (cambia con + e −)':G.wk.name+' · pedala!'}</div>`;SFX.beep(false);n--;setTimeout(step,900)}
@@ -828,6 +834,11 @@ function update(dt,now){
     const seg=course[Math.floor(G.z/SEG)%course.length],grade=G.free?seg.grade:0;
     const vt=speedFromPower(G.cur.p||0,grade);G.v+=(vt-G.v)*Math.min(1,dt*.7);if(G.v<.05&&vt===0)G.v=0;
     G.dist+=G.v*dt;G.z=G.dist%(course.length*SEG);G.bgX+=seg.curve*G.v*dt*.6;
+    if(G.ghost){
+      if(G.ghost.type==='free'){const tr=G.ghost.trace,i=G.t/5,k=Math.floor(i);G.ghostDone=k+1>=tr.length;G.gd=G.ghostDone?tr[tr.length-1]:lerp(tr[k],tr[k+1],i-k)}
+      else{const T=targetAt(G.t),gv=T?speedFromPower(tgtW(T.pct),0):0;G.gv+=(gv-G.gv)*Math.min(1,dt*.7);G.gd+=G.gv*dt}
+      const ahead=G.dist>G.gd;if(G.ghostAhead!=null&&ahead!==G.ghostAhead&&G.t>8&&!G.ghostDone){if(ahead){popup('👻 FANTASMA SUPERATO!','#2ee59d',true);G.score+=200*mult()}else popup('👻 Il fantasma ti ha passato','#a99bc9',true)}
+      G.ghostAhead=ahead}
     G.crank+=(G.cur.cad||0)/60*Math.PI*2*dt;
     // enemies
     G.spawnT-=dt;const inten=G.free?.7:(G.T?G.T.pct:.6);
@@ -916,7 +927,9 @@ function updDiag(){const d=$('#diag');if(!d||d.style.display==='none'||!G)return
    `Comando rulli : ${BLE.cp?(G.free?'SIM pendenza '+((BLE.lastGrade||0)/100).toFixed(1)+'%':'ERG '+(BLE.lastErg??'—')+' W'):'nessuno'}`,
    `Risposta rulli: ${res}${r?' ('+age(r.t)+')':''}`,
    `Cardio        : ${now-live.hTs<5000?live.hr+' bpm ('+age(live.hTs)+')':'—'}`].join('\n')}
-function updHUD(){updDiag();$('#demoBan').style.display=BLE.trainerOK?'none':'block';const p=Math.round(G.p3||G.cur.p||0);
+function updHUD(){updDiag();
+  {const el=$('#hGhost');if(!G.ghost)el.textContent='';else if(G.ghostDone)el.innerHTML='<span style="color:var(--grn)">👻 fantasma arrivato</span>';
+   else{const gap=G.dist-G.gd,m=Math.round(Math.abs(gap));el.innerHTML=gap>=0?`<span style="color:var(--grn)">👻 +${m} m davanti</span>`:`<span style="color:#ff8a3a">👻 ${m} m dietro</span>`}}$('#demoBan').style.display=BLE.trainerOK?'none':'block';const p=Math.round(G.p3||G.cur.p||0);
   $('#hPow').textContent=p;$('#hPow').style.color=zoneOf(p/profile.ftp).c;
   $('#hCad').textContent=Math.round(G.cur.cad||0);$('#hHr').textContent=G.cur.hr||'--';$('#hSpd').textContent=(G.v*3.6).toFixed(1);
   $('#hScore').textContent=G.score.toLocaleString('it-IT');$('#hMult').textContent=`x${mult()} · combo ${G.combo}`;
@@ -971,6 +984,7 @@ function render(){
   // bucket enemies
   const buckets={};
   for(const e of G.enemies){const q=proj(e.d+CAMBACK,e.x+Math.sin(e.ph)*.08,e.h+Math.sin(e.ph*1.3)*.3);if(!q){e.sx=null;continue}e.sx=q.X;e.sy=q.Y;e.sr=Math.max(3,1.1*q.sc);(buckets[q.k]=buckets[q.k]||[]).push(e)}
+  if(G.ghost&&!G.ghostDone){const gap=G.gd-G.dist;if(gap>-CAMBACK+2&&gap<700){const q=proj(gap+CAMBACK,.42,0);if(q){const gh={ghost:1,sx:q.X,sy:q.Y,sr:q.sc,sc:q.sc};(buckets[q.k]=buckets[q.k]||[]).push(gh)}}}
   if(G.boss){const b=G.boss,q=proj(b.d+CAMBACK,Math.sin(b.ph*.8)*.4,b.h+Math.sin(b.ph*1.7)*.4);if(q){b.sx=q.X;b.sy=q.Y;b.sr=Math.max(10,3.2*q.sc);(buckets[q.k]=buckets[q.k]||[]).push(b)}}
   // draw far -> near
   for(let k=DRAW-1;k>=0;k--){const a=P[k],b=P[k+1];if(!a.sc||!b.sc)continue;
@@ -1001,6 +1015,8 @@ function render(){
   if(G.od>0){ctx.strokeStyle=`rgba(255,217,58,${.35+.25*Math.sin(G.t*8)})`;ctx.lineWidth=10;ctx.strokeRect(5,5,w-10,h-10)}
 }
 function drawEnemy(e){const r=e.sr,X=e.sx,Y=e.sy;if(r<2)return;
+  if(e.ghost){ctx.save();ctx.globalAlpha=.5;drawRider(X,Y,e.sc/100*1.05,G.crank+.8,{av:profile.avatar,col:'#dff4ff',t:G.t});ctx.globalAlpha=.9;
+    if(e.sc>4){ctx.fillStyle='#dff4ff';ctx.font=`800 ${Math.round(clamp(e.sc*.22,10,22))}px Orbitron,sans-serif`;ctx.textAlign='center';ctx.fillText('👻',X,Y-e.sc*1.75)}ctx.restore();return}
   if(e===G.boss){const pulse=1+.05*Math.sin(e.ph*6);ctx.save();ctx.translate(X,Y);ctx.scale(pulse,pulse);
     ctx.fillStyle='#1a0420';ctx.strokeStyle='#ff3a6e';ctx.lineWidth=Math.max(2,r*.08);ctx.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2+e.ph*.5,rr=i%2?r*.75:r;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}ctx.closePath();ctx.fill();ctx.stroke();
     ctx.fillStyle='#ff3a6e';for(const s of [-1,1]){ctx.beginPath();ctx.arc(s*r*.32,-r*.15,r*.13,0,7);ctx.fill()}
@@ -1100,6 +1116,10 @@ function finish(complete){if(!G||G.ended)return;G.ended=true;hideOvl();
   if(wk&&!wk.ramp){const zr=G.zoneSecs?G.inZone/G.zoneSecs:0;stars=done?(zr>=.88?3:zr>=.75?2:zr>=.6?1:0):0;G.zr=zr}
   if(wk&&wk.ramp){let best=0;for(let i=60;i<=ps.length;i++){const a=avg(ps.slice(i-60,i));if(a>best)best=a}if(best>0&&dur>480){ftpEst=Math.round(best*.75);stars=3;badge('ftp')}else stars=0}
   const km=G.dist/1000,mins=dur/60;
+  let ghostTxt=null,newGhost=false;
+  if(G.ghost&&!(G.ghost.type==='free'&&G.ghostDone&&G.dist<G.gd)){const gap=Math.round(G.dist-G.gd);ghostTxt=(gap>=0?'+':'−')+Math.abs(gap)+' m'}
+  if(G.free&&dur>=300){const old=profile.ghostFree,spd=G.dist/dur,real=BLE.trainerOK;
+    if(!old||(real&&old.demo)||((real||old.demo)&&spd>old.dist/old.dur)){profile.ghostFree={date:Date.now(),dur,dist:Math.round(G.dist),trace:sm.filter((x,i)=>i%5===0).map(x=>Math.round(x.d)),demo:!BLE.trainerOK};newGhost=true}}
   // XP
   const prev=wk?(profile.stars[wk.id]||0):0;let xp=Math.round(G.score/25+mins*8+(stars||0)*50+Math.max(0,(stars||0)-prev)*150);
   const lv0=levelOf(profile.xp);profile.xp+=xp;const lv1=levelOf(profile.xp);
@@ -1116,6 +1136,8 @@ function finish(complete){if(!G||G.ended)return;G.ended=true;hideOvl();
   const st=[['Punteggio',G.score.toLocaleString('it-IT')],['Tempo',fmt(dur)],['Distanza',km.toFixed(2)+' km'],['Potenza media',avgP+' W'],['NP',np+' W'],['TSS',tss],...(kcalHr!=null?[['Kcal (dal battito)',kcalHr]]:[]),['Kcal (dai watt)',kj],
     ['FC media',hrs.length?Math.round(avg(hrs))+' bpm':'—'],['FC max',hrs.length?Math.max(...hrs)+' bpm':'—'],['Droni abbattuti',G.kills],['Precisione',G.fired?Math.round(G.hits/G.fired*100)+'%':'—'],['Combo max',G.maxCombo],['Boss',G.bossKills]];
   if(G.zr!=null)st.splice(1,0,['Tempo in zona',Math.round(G.zr*100)+'%']);
+  if(ghostTxt)st.splice(1,0,['👻 Distacco fantasma',ghostTxt]);
+  if(newGhost)st.splice(1,0,['👻 Nuovo fantasma','record di velocità!']);
   $('#rStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
   $('#rXp').innerHTML=`+${xp} XP`+(lv1>lv0?` · <span style="color:var(--yel)">LEVEL UP! Livello ${lv1} – ${TITLES[lv1-1]||''}</span>`:'');
   $('#rBadges').innerHTML=G.newBadges.map(b=>`<span class="chip on" style="margin-right:6px">${b.ic} ${b.n}</span>`).join('');
