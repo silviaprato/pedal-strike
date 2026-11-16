@@ -138,7 +138,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <!-- ============ HOME ============ -->
 <section id="home" class="screen on"><div class="wrap">
   <div class="logo">PEDAL//STRIKE</div>
-  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v1.4</span></div>
+  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v1.6</span></div>
   <div id="btWarn"></div>
   <div class="grid g2">
     <div class="card">
@@ -212,7 +212,8 @@ button{font:inherit;color:inherit;cursor:pointer}
     <h3 style="margin-top:0">🕹️ Assegna tasti</h3>
     <div class="mut" style="margin-bottom:6px">Funziona con controller Zwift, tastiere, telecomandi Bluetooth da manubrio, pedaliere “volta pagina” e gamepad. Tocca <b>Assegna</b> e poi premi il tasto fisico che vuoi usare. I pulsanti A B C D sullo schermo funzionano sempre.</div>
     <div id="mapList"></div>
-    <div style="margin:10px 0"><button class="btn alt sm" id="mapReset">Ripristina predefiniti</button></div>
+    <div class="mut" style="font-size:14px;margin-top:10px">💾 Le scelte (in evidenza con ✓) si salvano da sole su questo dispositivo e restano per tutte le sessioni e per tutti i profili. Non serve riassegnarle.</div>
+    <div style="margin:10px 0"><button class="btn alt sm" id="mapReset">↺ Reset tasti</button></div>
     <div class="warn" style="margin-bottom:0">Senza rulli connessi l'app gira in <b>modalità DEMO</b> (potenza simulata) per provare il gioco.</div>
   </div>
   <details class="card" style="margin-top:14px"><summary style="font-weight:700">Log Bluetooth (diagnostica)</summary><div class="log" id="log"></div></details>
@@ -313,8 +314,8 @@ PS.list=PS.list.map(x=>newProf(x));if(!PS.list[PS.cur])PS.cur=0;
 let profile=PS.list[PS.cur];
 const saveProfile=()=>{try{localStorage.setItem('ps_profiles',JSON.stringify(PS))}catch(e){}};
 const DEFMAP={A:['k:a','k:1','p:0','z:A'],B:['k:b','k:2','p:1','z:B'],C:['k:c','k:y','k:3','p:3','z:C'],D:['k:d','k:z','k:4','p:2','z:D'],P:['k: ','p:9'],UP:['k:arrowup','p:12','z:SU'],DN:['k:arrowdown','p:13','z:SD']};
-let SET={music:true,sfx:true,vol:.7,map:null};try{Object.assign(SET,JSON.parse(localStorage.getItem('ps_settings')||'{}'))}catch(e){}
-if(!SET.map)SET.map=JSON.parse(JSON.stringify(DEFMAP));
+let SET={music:true,sfx:true,vol:.7,map:null,custom:[],labels:{}};try{Object.assign(SET,JSON.parse(localStorage.getItem('ps_settings')||'{}'))}catch(e){}
+if(!SET.map)SET.map=JSON.parse(JSON.stringify(DEFMAP));if(!Array.isArray(SET.custom))SET.custom=[];if(!SET.labels)SET.labels={};
 const saveSet=()=>{try{localStorage.setItem('ps_settings',JSON.stringify(SET))}catch(e){}};
 const LEVELS=[0,300,800,1500,2500,4000,6000,8500,12000,16000,21000,27000,34000,42000,51000,61000,72000,85000,100000];
 const TITLES=['Recluta','Apprendista','Gregario','Gregario Elite','Passista','Cronoman','Scalatore','Scalatore Elite','Capitano','Capitano Elite','Campione','Campione Elite','Maglia Neon','Maglia Neon Elite','Leggenda','Leggenda II','Leggenda III','Mito','Immortale'];
@@ -520,7 +521,7 @@ async function connectZwift(){
     const asy=await svc.getCharacteristic(ZW_ASYNC),rx=await svc.getCharacteristic(ZW_RX);
     try{const tx=await svc.getCharacteristic(ZW_TX);await tx.startNotifications();tx.addEventListener('characteristicvaluechanged',e=>log('Zwift sync ← '+hex(u8of(e.target.value))))}catch(e){}
     await asy.startNotifications();
-    const st={prev:{}};asy.addEventListener('characteristicvaluechanged',e=>onZwift(u8of(e.target.value),st));
+    const st={prev:{},name:dev.name||'Zwift'};asy.addEventListener('characteristicvaluechanged',e=>onZwift(u8of(e.target.value),st));
     await writeChar(rx,new TextEncoder().encode('RideOn'));
     BLE.zw.push(dev);dev.addEventListener('gattserverdisconnected',()=>{BLE.zw=BLE.zw.filter(d=>d!==dev);setChip('#stZw',BLE.zw.length?'on':'off',BLE.zw.length?'Connesso':'Disconnesso')});
     setChip('#stZw','on',(dev.name||'Zwift')+(BLE.zw.length>1?` (+${BLE.zw.length-1})`:''));log('Controller connesso: '+dev.name+'. Premi un tasto per testarlo.');
@@ -541,23 +542,29 @@ function onZwift(u,st){
     if(got.length)$('#dvZw').textContent='Premuto: '+got.map(k=>padName('z:'+k)).join(', ');st.prev=pr;return}
   if(t===0x15||t===0x19)return;
   // formato sconosciuto: ogni messaggio nuovo puo' essere assegnato in "Assegna tasti"
-  if(h!==st.prevRaw){st.prevRaw=h;if(learning){if(seenBefore==null||seenBefore<learnT)inputEvent('zr:'+h)}else inputEvent('zr:'+h)}
+  if(h!==st.prevRaw){st.prevRaw=h;if(learning){if(seenBefore==null||seenBefore<learnT){const id='zr:'+h;if(!SET.labels[id])SET.labels[id]=st.name+' · tasto '+(Object.keys(SET.labels).length+1);inputEvent(id)}}else inputEvent('zr:'+h)}
 }
 /* ---- mappatura comandi: tastiera, telecomandi, gamepad, Zwift ---- */
 const ACTS={A:'Spara A',B:'Spara B',C:'Spara C',D:'Spara D',P:'Pausa',UP:'Intensità +',DN:'Intensità −'};
 let learning=null,learnT=0;
 function padName(id){const i=id.indexOf(':'),t=id.slice(0,i),v=id.slice(i+1);
   if(t==='k')return v===' '?'Spazio':'Tasto '+(v.length===1?v.toUpperCase():v.replace('arrow','freccia '));
-  if(t==='p')return 'Gamepad '+v;if(t==='z')return 'Zwift '+({C:'Y',D:'Z',SU:'Shift +',SD:'Shift −'}[v]||v);return 'Zwift (codice '+v.slice(0,8)+'…)'}
+  if(t==='p')return 'Gamepad '+v;if(t==='z')return 'Zwift '+({C:'Y',D:'Z',SU:'Shift +',SD:'Shift −'}[v]||v);return SET.labels[id]||('Zwift (codice '+v.slice(0,8)+'…)')}
 function inputEvent(id){
-  if(learning){const a=learning;learning=null;for(const k in SET.map)SET.map[k]=SET.map[k].filter(x=>x!==id);SET.map[a].push(id);saveSet();renderMap();toastMini(padName(id)+' → '+ACTS[a]);return true}
+  if(learning){const a=learning;learning=null;SET.map[a]=SET.map[a].filter(x=>!SET.custom.includes(x)||x===id);for(const k in SET.map)SET.map[k]=SET.map[k].filter(x=>x!==id);SET.map[a].push(id);SET.custom=SET.custom.filter(x=>x!==id);SET.custom.push(id);SET.custom=SET.custom.filter(x=>Object.values(SET.map).some(l=>l.includes(x)));saveSet();renderMap();toastMini('✓ Salvato: '+padName(id)+' → '+ACTS[a]);SFX.beep(true);return true}
   for(const a in SET.map)if(SET.map[a].includes(id)){doAct(a);return true}return false}
 function doAct(a){if('ABCD'.includes(a))fire(a);else if(a==='P')togglePause();else if(a==='UP')bump(1);else if(a==='DN')bump(-1)}
 function renderMap(){const el=$('#mapList');if(!el)return;
-  el.innerHTML=Object.keys(ACTS).map(a=>`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)">
-    <b style="width:110px;color:${LCOL[a]||'var(--ink)'}">${ACTS[a]}</b><span style="flex:1;min-width:0">${SET.map[a].map(id=>`<span class="chip" style="margin:2px;display:inline-block">${esc(padName(id))}</span>`).join('')}</span>
-    <button class="btn ${learning===a?'cy':'alt'} sm" data-learn="${a}">${learning===a?'Premi ora il tasto…':'Assegna'}</button></div>`).join('');
-  $$('#mapList [data-learn]').forEach(b=>b.onclick=()=>{learning=learning===b.dataset.learn?null:b.dataset.learn;learnT=Date.now();renderMap()})}
+  el.innerHTML=Object.keys(ACTS).map(a=>{const mine=SET.map[a].filter(id=>SET.custom.includes(id)),def=SET.map[a].filter(id=>!SET.custom.includes(id));
+    const chip=(id,my)=>`<span class="chip ${my?'on':''}" style="margin:2px;display:inline-flex;gap:6px;align-items:center;${my?'font-size:15px;font-weight:700':'opacity:.55'}">${my?'✓ ':''}${esc(padName(id))}<button data-rm="${a}|${esc(id)}" aria-label="Rimuovi" style="background:none;border:none;padding:0 2px;font-size:15px;line-height:1">×</button></span>`;
+    return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)">
+    <b style="width:110px;color:${LCOL[a]||'var(--ink)'}">${ACTS[a]}</b>
+    <span style="flex:1;min-width:0">${mine.length?mine.map(id=>chip(id,1)).join(''):'<span class="mut" style="font-size:14px">nessun tasto tuo · </span>'}
+      <details style="display:inline"><summary class="mut" style="font-size:13px;cursor:pointer;display:inline">predefiniti (${def.length})</summary>${def.map(id=>chip(id,0)).join('')}</details></span>
+    <button class="btn ${learning===a?'cy':'alt'} sm" data-learn="${a}">${learning===a?'Premi ora il tasto… (tocca per annullare)':mine.length?'Cambia':'Assegna'}</button></div>`}).join('');
+  $$('#mapList [data-learn]').forEach(b=>b.onclick=()=>{learning=learning===b.dataset.learn?null:b.dataset.learn;learnT=Date.now();renderMap()});
+  $$('#mapList [data-rm]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=b.dataset.rm.indexOf('|'),a=b.dataset.rm.slice(0,i),id=b.dataset.rm.slice(i+1);
+    SET.map[a]=SET.map[a].filter(x=>x!==id);SET.custom=SET.custom.filter(x=>x!==id);saveSet();renderMap()})}
 const padPrev={};
 function pollPads(){try{const gps=navigator.getGamepads?navigator.getGamepads():[];for(const gp of gps){if(!gp)continue;
   gp.buttons.forEach((b,i)=>{const k=gp.index+':'+i,pr=b.pressed||b.value>.5;if(pr&&!padPrev[k])inputEvent('p:'+i);padPrev[k]=pr})}}catch(e){}requestAnimationFrame(pollPads)}
@@ -605,7 +612,7 @@ function openWk(id){SFX.init();const wk=WORKOUTS.find(w=>w.id===id),st=wkStats(w
   $('#modal').classList.add('on');$('#mNo').onclick=()=>$('#modal').classList.remove('on');$('#mGo').onclick=()=>{$('#modal').classList.remove('on');startRide(wk)}}
 $('#swProf').onclick=()=>profPicker(false);
 $('#freeBtn').onclick=()=>{SFX.init();startRide(null)};
-$('#mapReset').onclick=()=>{SET.map=JSON.parse(JSON.stringify(DEFMAP));saveSet();renderMap()};
+$('#mapReset').onclick=()=>askConfirm('Cancellare tutti i tasti che hai assegnato e tornare ai predefiniti?',()=>{SET.map=JSON.parse(JSON.stringify(DEFMAP));SET.custom=[];SET.labels={};learning=null;saveSet();renderMap();toastMini('Tasti ripristinati')});
 $('#cTrainer').onclick=()=>{log('Tocco: Connetti rulli');setChip('#stTrainer','wait','Ricerca…');connectTrainer(false)};$('#cTrainerAll').onclick=()=>{log('Tocco: mostra tutti');setChip('#stTrainer','wait','Ricerca…');connectTrainer(true)};$('#cHr').onclick=connectHR;$('#cZw').onclick=connectZwift;
 
 const BADGES=[
@@ -685,13 +692,13 @@ function startRide(wk){
      p3:0,tw:0,T:null,lastSeg:-1,secAcc:0,bias:0,diff:50,crank:0,bgX:0,shake:0,demoHr:72,zeroT:0,low:0,bossKills:0,newBadges:[],
      startDate:new Date(),lastFrame:performance.now(),hudT:0,chartT:0,gradeT:0,cur:{p:0,cad:0,hr:0},escaped:0};
   show('ride');resize();requestWake();
-  $('#bias').textContent=G.free?'Diff 50%':'0%';$('#bSkip').style.display=G.free||wk.ramp?'none':'';
+  $('#bias').textContent=G.free?'Salite 50%':'0%';$('#bSkip').style.display=G.free||wk.ramp?'none':'';
   $('#hMode').textContent=(BLE.trainerOK?(BLE.cp?(G.free?'SIM':'ERG'):'Rulli'):'DEMO')+(G.free?' · Giro libero':' · '+wk.name);
   $('#bossBar').style.display='none';
   if(!G.free){G.T=targetAt(0);G.tw=tgtW(G.T.pct);if(BLE.cp)ftmsErg(G.tw)}else if(BLE.cp)ftmsSim(0);
   countdown();requestAnimationFrame(loop)}
 function countdown(){let n=3;const o=$('#ovl');o.classList.add('on');
-  const step=()=>{if(!G)return;if(n>0){$('#ovlIn').innerHTML=`<div class="big">${n}</div><div style="font-size:20px">${G.free?'Giro libero':G.wk.name} · pedala!</div>`;SFX.beep(false);n--;setTimeout(step,900)}
+  const step=()=>{if(!G)return;if(n>0){$('#ovlIn').innerHTML=`<div class="big">${n}</div><div style="font-size:20px">${G.free?'Giro libero · salite sentite al 50% (cambia con + e −)':G.wk.name+' · pedala!'}</div>`;SFX.beep(false);n--;setTimeout(step,900)}
     else{$('#ovlIn').innerHTML='<div class="big">GO!</div>';SFX.beep(true);setTimeout(()=>{o.classList.remove('on')},500);G.started=true;G.lastFrame=performance.now();MUSIC.setTempo(G.free?126:120);MUSIC.start()}};step()}
 function targetAt(t){const wk=G.wk;for(let i=0;i<wk.segs.length;i++){const s=wk.segs[i],a=wk.starts[i];if(t<a+s.d){const f=(t-a)/s.d;return{i,pct:s.p+(s.p2-s.p)*f,seg:s,start:a,remain:a+s.d-t}}}return null}
 const tgtW=pct=>Math.round(pct*profile.ftp*(1+G.bias/100));
@@ -727,7 +734,7 @@ function update(dt,now){
     G.enemies=G.enemies.filter(e=>!e.dead);
     if(G.boss){G.boss.ph+=dt;G.boss.wt-=dt;if(G.boss.wt<=0)rotWeak()}
     if(G.od>0){G.od-=dt;if(G.od<=0)popup('Overdrive finito','#a99bc9')}
-    if(G.free&&BLE.cp){G.gradeT-=dt;if(G.gradeT<=0){G.gradeT=2;ftmsSim(seg.grade*100*G.diff/50)}}
+    if(G.free&&BLE.cp){G.gradeT-=dt;if(G.gradeT<=0){G.gradeT=2;ftmsSim(seg.grade*100*G.diff/100)}}
   }
   // shots
   for(const s of G.shots){s.t+=dt/.22;if(s.t>=1&&!s.done){s.done=true;onShotHit(s)}}
@@ -800,7 +807,7 @@ function updHUD(){const p=Math.round(G.p3||G.cur.p||0);
   $('#hScore').textContent=G.score.toLocaleString('it-IT');$('#hMult').textContent=`x${mult()} · combo ${G.combo}`;
   $('#hEnergy').classList.toggle('od',G.od>0);$('#hEnergy div').style.width=(G.od>0?G.od/15*100:G.energy)+'%';
   $('#hTime').textContent=`${fmt(G.t)} · ${(G.dist/1000).toFixed(2)} km`;
-  if(G.free){const g=course[Math.floor(G.z/SEG)%course.length].grade*100;$('#hInt').textContent='Giro libero';$('#hRem').textContent=(g>=0?'+':'')+g.toFixed(1)+'%';$('#hNext').textContent='pendenza · difficoltà '+G.diff+'%';$('#hTgt').textContent=(BLE.cp?'SIM':'')+' '+(p/profile.weight).toFixed(1)+' W/kg';$('#hCue').textContent=''}
+  if(G.free){const g=course[Math.floor(G.z/SEG)%course.length].grade*100;$('#hInt').textContent='Giro libero';$('#hRem').textContent=(g>=0?'+':'')+g.toFixed(1)+'%';$('#hNext').textContent='pendenza reale · sui rulli la senti al '+G.diff+'%';$('#hTgt').textContent=(BLE.cp?'SIM':'')+' '+(p/profile.weight).toFixed(1)+' W/kg';$('#hCue').textContent=''}
   else if(G.T){const T=G.T,nx=G.wk.segs[T.i+1];$('#hInt').textContent=T.seg.txt;$('#hInt').style.color=zoneOf(T.pct).c;$('#hRem').textContent=fmt(T.remain);
     $('#hNext').textContent=nx?`Poi: ${nx.txt} · ${tgtW(nx.p)} W · ${fmt(nx.d)}`:'Ultimo intervallo!';$('#hTgt').innerHTML=`🎯 <span style="color:${zoneOf(T.pct).c}">${G.tw} W</span>${BLE.cp?' · ERG':''}`;
     $('#hCue').textContent=G.cue||'';$('#hCue').style.color=G.cue&&G.cue[0]==='▲'?'#2de2ff':'#ff8a3a'}
@@ -916,7 +923,7 @@ function drawRider(x,y,s,cr){ctx.save();ctx.translate(x,y);ctx.scale(s,s);
 function togglePause(){if(!G||!G.started||G.ended)return;G.paused=!G.paused;if(G.paused)MUSIC.stop();else MUSIC.start();
   if(G.paused)showOvl(`<div class="big" style="font-size:64px">PAUSA</div><div style="display:flex;gap:10px;justify-content:center;margin-top:16px"><button class="btn" id="oRes">▶ Riprendi</button><button class="btn alt" id="oEnd">Termina</button></div>`),$('#oRes').onclick=togglePause,$('#oEnd').onclick=()=>finish(false);
   else hideOvl()}
-function bump(d){if(!G)return;if(G.free){G.diff=clamp(G.diff+d*10,0,100);$('#bias').textContent='Diff '+G.diff+'%';BLE.lastGrade=null}
+function bump(d){if(!G)return;if(G.free){G.diff=clamp(G.diff+d*10,0,100);$('#bias').textContent='Salite '+G.diff+'%';BLE.lastGrade=null}
   else{G.bias=clamp(G.bias+d*5,-30,30);$('#bias').textContent=(G.bias>0?'+':'')+G.bias+'%';if(G.T){G.tw=tgtW(G.T.pct);ftmsErg(G.tw)}}}
 $('#bPause').onclick=togglePause;$('#bMus').onclick=()=>setMusic(!SET.music);$('#bSfx').onclick=()=>setSfx(!SET.sfx);updAudioBtns();$('#bPlus').onclick=()=>bump(1);$('#bMinus').onclick=()=>bump(-1);
 $('#bSkip').onclick=()=>{if(G&&G.T&&!G.free){G.t=G.T.start+G.T.seg.d+.01}};
