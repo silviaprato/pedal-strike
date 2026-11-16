@@ -138,7 +138,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <!-- ============ HOME ============ -->
 <section id="home" class="screen on"><div class="wrap">
   <div class="logo">PEDAL//STRIKE</div>
-  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D</div>
+  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v1.3</span></div>
   <div id="btWarn"></div>
   <div class="grid g2">
     <div class="card">
@@ -422,7 +422,10 @@ function writeChar(ch,bytes){
 function setChip(id,state,txt){const el=$(id);el.className='chip '+(state==='on'?'on':state==='wait'?'wait':'');el.textContent=txt;renderChips()}
 function btAvailable(){return !!(navigator.bluetooth&&navigator.bluetooth.requestDevice)}
 
-const FTMS=0x1826,IBD=0x2AD2,FTMS_CP=0x2AD9,CPS=0x1818,CPM=0x2A63,HRS=0x180D,HRM=0x2A37,CSC=0x1816;
+const FTMS='00001826-0000-1000-8000-00805f9b34fb',IBD='00002ad2-0000-1000-8000-00805f9b34fb',FTMS_CP='00002ad9-0000-1000-8000-00805f9b34fb',CPS='00001818-0000-1000-8000-00805f9b34fb',CPM='00002a63-0000-1000-8000-00805f9b34fb',HRS='0000180d-0000-1000-8000-00805f9b34fb',HRM='00002a37-0000-1000-8000-00805f9b34fb',CSC='00001816-0000-1000-8000-00805f9b34fb',ZWS='0000fc82-0000-1000-8000-00805f9b34fb';
+function btFail(what,e){const m=(e&&(e.message||e.name))||String(e);log(what+': '+m);
+  if(/cancel|annull|chooser|User/i.test(m)&&e.name==='NotFoundError')return;
+  showInfo(`⚠️ ${what}: connessione non riuscita.\n\nErrore: ${m}\n\nControlla:\n• di aver aperto la pagina con l'app Bluefy (non Safari)\n• Impostazioni iPad → Bluefy → Bluetooth attivo\n• che il dispositivo non sia già collegato a un'altra app (Zwift, app Decathlon, telefono): chiudila o spegni il Bluetooth del telefono\n• di pedalare qualche secondo per svegliare i rulli`)}
 async function connectTrainer(all){
   if(!btAvailable())return btMissing();
   try{
@@ -431,7 +434,7 @@ async function connectTrainer(all){
     const dev=await navigator.bluetooth.requestDevice(opts);
     BLE.trainer=dev;dev.addEventListener('gattserverdisconnected',()=>onDisc('trainer'));
     await setupTrainer(dev);
-  }catch(e){log('Rulli: '+e.message);setChip('#stTrainer','off','Non connesso')}
+  }catch(e){btFail('Rulli',e);setChip('#stTrainer','off','Non connesso')}
 }
 async function setupTrainer(dev){
   setChip('#stTrainer','wait','Connessione…');
@@ -481,7 +484,7 @@ async function connectHR(){
   if(!btAvailable())return btMissing();
   try{const dev=await navigator.bluetooth.requestDevice({filters:[{services:[HRS]}]});
     BLE.hrDev=dev;dev.addEventListener('gattserverdisconnected',()=>onDisc('hr'));await setupHR(dev)}
-  catch(e){log('Cardio: '+e.message);setChip('#stHr','off','Non connesso')}
+  catch(e){btFail('Cardio',e);setChip('#stHr','off','Non connesso')}
 }
 async function setupHR(dev){
   setChip('#stHr','wait','Connessione…');
@@ -504,10 +507,10 @@ const ZW_SVC='00000001-19ca-4651-86e5-fa29dcdd09d1',ZW_ASYNC='00000002-19ca-4651
 async function connectZwift(){
   if(!btAvailable())return btMissing();
   try{
-    const dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'Zwift'},{services:[0xFC82]}],optionalServices:[ZW_SVC,0xFC82]});
+    const dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'Zwift'},{services:[ZWS]}],optionalServices:[ZW_SVC,ZWS]});
     setChip('#stZw','wait','Connessione…');
     const srv=await dev.gatt.connect();let svc=null;
-    for(const u of [0xFC82,ZW_SVC]){try{svc=await srv.getPrimaryService(u);break}catch(e){}}
+    for(const u of [ZWS,ZW_SVC]){try{svc=await srv.getPrimaryService(u);break}catch(e){}}
     if(!svc)throw new Error('servizio Zwift non trovato');
     const asy=await svc.getCharacteristic(ZW_ASYNC),rx=await svc.getCharacteristic(ZW_RX);
     try{const tx=await svc.getCharacteristic(ZW_TX);await tx.startNotifications();tx.addEventListener('characteristicvaluechanged',e=>log('Zwift sync: '+hex(u8of(e.target.value)).slice(0,60)))}catch(e){}
@@ -516,7 +519,7 @@ async function connectZwift(){
     await writeChar(rx,new TextEncoder().encode('RideOn'));
     BLE.zw.push(dev);dev.addEventListener('gattserverdisconnected',()=>{BLE.zw=BLE.zw.filter(d=>d!==dev);setChip('#stZw',BLE.zw.length?'on':'off',BLE.zw.length?'Connesso':'Disconnesso')});
     setChip('#stZw','on',(dev.name||'Zwift')+(BLE.zw.length>1?` (+${BLE.zw.length-1})`:''));log('Controller connesso: '+dev.name+'. Premi un tasto per testarlo.');
-  }catch(e){log('Controller: '+e.message);setChip('#stZw',BLE.zw.length?'on':'off',BLE.zw.length?'Connesso':'Non connesso')}
+  }catch(e){btFail('Controller Zwift',e);setChip('#stZw',BLE.zw.length?'on':'off',BLE.zw.length?'Connesso':'Non connesso')}
 }
 function pbParse(b){const r={};let i=0;const varint=()=>{let v=0,s=0,x;do{x=b[i++];v+=(x&127)*2**s;s+=7}while(x&128&&i<b.length);return v};
   try{while(i<b.length){const key=varint(),f=Math.floor(key/8),wt=key&7;if(wt===0){const v=varint();if(!(f in r))r[f]=v}else if(wt===2){const l=varint();i+=l}else if(wt===5)i+=4;else if(wt===1)i+=8;else break}}catch(e){}return r}
@@ -574,7 +577,7 @@ function openWk(id){SFX.init();const wk=WORKOUTS.find(w=>w.id===id),st=wkStats(w
   $('#modal').classList.add('on');$('#mNo').onclick=()=>$('#modal').classList.remove('on');$('#mGo').onclick=()=>{$('#modal').classList.remove('on');startRide(wk)}}
 $('#swProf').onclick=()=>profPicker(false);
 $('#freeBtn').onclick=()=>{SFX.init();startRide(null)};
-$('#cTrainer').onclick=()=>connectTrainer(false);$('#cTrainerAll').onclick=()=>connectTrainer(true);$('#cHr').onclick=connectHR;$('#cZw').onclick=connectZwift;
+$('#cTrainer').onclick=()=>{log('Tocco: Connetti rulli');setChip('#stTrainer','wait','Ricerca…');connectTrainer(false)};$('#cTrainerAll').onclick=()=>{log('Tocco: mostra tutti');setChip('#stTrainer','wait','Ricerca…');connectTrainer(true)};$('#cHr').onclick=connectHR;$('#cZw').onclick=connectZwift;
 
 const BADGES=[
  {id:'first',n:'Primo Sangue',d:'Abbatti il primo drone',ic:'🎯'},{id:'boss',n:'Ammazzaboss',d:'Sconfiggi un boss',ic:'👾'},
