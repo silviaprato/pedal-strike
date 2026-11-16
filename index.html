@@ -138,7 +138,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <!-- ============ HOME ============ -->
 <section id="home" class="screen on"><div class="wrap">
   <div class="logo">PEDAL//STRIKE</div>
-  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v2.0</span></div>
+  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v2.1</span></div>
   <div id="btWarn"></div>
   <div class="grid g2">
     <div class="card">
@@ -239,6 +239,12 @@ button{font:inherit;color:inherit;cursor:pointer}
       <div class="field"><label>Nome</label><input id="pName" maxlength="20"></div>
       <div class="field"><label>FTP (watt) — se non la conosci fai il “Ramp Test FTP”</label><input id="pFtp" type="number" inputmode="numeric" min="50" max="600"></div>
       <div class="field"><label>Peso (kg)</label><input id="pW" type="number" inputmode="decimal" min="30" max="160"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="field" style="flex:1;min-width:110px"><label for="pAge">Età</label><input id="pAge" type="number" inputmode="numeric" min="12" max="99" placeholder="es. 40"></div>
+        <div class="field" style="flex:1;min-width:110px"><label for="pSex">Sesso</label><select id="pSex" style="background:#0008;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:12px;font:inherit;font-size:18px"><option value="">—</option><option value="F">Donna</option><option value="M">Uomo</option></select></div>
+        <div class="field" style="flex:1;min-width:110px"><label for="pH">Altezza (cm)</label><input id="pH" type="number" inputmode="numeric" min="120" max="220" placeholder="facoltativa"></div>
+      </div>
+      <div class="mut" style="font-size:14px;margin-bottom:10px">Età, sesso e peso servono a stimare le kcal dal battito cardiaco.</div>
       <button class="btn" id="pSave">Salva</button>
       <div class="mut" id="pWkg" style="margin-top:10px"></div>
     </div>
@@ -261,7 +267,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <div class="top"><button class="btn alt sm" data-go="home">◀</button><h2>CLASSIFICA</h2></div>
   <div class="tabs" id="lbTabs"></div>
   <div style="overflow-x:auto" class="card"><table id="lbTable" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums"></table></div>
-  <div class="mut" style="font-size:14px;margin-top:10px">👑 = migliore per ogni voce. Medie calcolate sulle uscite di almeno 1 minuto; FC media solo sulle uscite con il cardio collegato. Kcal: quelle dell'orologio (⌚) quando le hai inserite, altrimenti stimate dai watt (1 kJ ≈ 1 kcal). Le uscite in modalità DEMO non contano.</div>
+  <div class="mut" style="font-size:14px;margin-top:10px">👑 = migliore per ogni voce. Medie calcolate sulle uscite di almeno 1 minuto; FC media solo sulle uscite con il cardio collegato. Kcal: quelle dell'orologio (⌚) se inserite; altrimenti stimate dal battito (con età e sesso nel profilo, formula di Keytel), oppure dai watt (1 kJ ≈ 1 kcal). Le uscite in modalità DEMO non contano.</div>
 </div></section>
 
 <!-- ============ HISTORY ============ -->
@@ -331,7 +337,7 @@ const LET=['A','B','C','D'];
 
 /* =================== PROFILE =================== */
 const PCOLS=['#ff3a9d','#2de2ff','#ffd93a','#2ee59d','#b23aff','#ff8a3a'];
-const newProf=o=>Object.assign({name:'Rider',ftp:150,weight:65,xp:0,stars:{},history:[],badges:{},km:0,minutes:0,col:PCOLS[0],avatar:'rider'},o||{});
+const newProf=o=>Object.assign({name:'Rider',ftp:150,weight:65,xp:0,stars:{},history:[],badges:{},km:0,minutes:0,col:PCOLS[0],avatar:'rider',age:null,sex:null,height:null},o||{});
 let PS=null;
 try{PS=JSON.parse(localStorage.getItem('ps_profiles')||'null')}catch(e){}
 if(!PS||!Array.isArray(PS.list)||!PS.list.length){let old=null;try{old=JSON.parse(localStorage.getItem('ps_profile')||'null')}catch(e){}PS={cur:0,list:[newProf(old)]}}
@@ -673,7 +679,7 @@ function renderAvatars(){const g=$('#avGrid');if(!g)return;
     b.onclick=()=>{profile.avatar=b.dataset.av;saveProfile();renderAvatars();renderHome();toastMini('Ora pedala: '+AVATARS[profile.avatar].n)}});
   $('#colRow').innerHTML=PCOLS.map(cc=>`<button data-col="${cc}" aria-label="Colore ${cc}" style="width:34px;height:34px;border-radius:50%;background:${cc};border:3px solid ${profile.col===cc?'#fff':'transparent'}"></button>`).join('');
   $$('#colRow button').forEach(b=>b.onclick=()=>{profile.col=b.dataset.col;saveProfile();renderAvatars();renderHome()})}
-function renderProfile(){renderAvatars();$('#aMus').checked=SET.music;$('#aSfx').checked=SET.sfx;$('#aVol').value=SET.vol;$('#pName').value=profile.name;$('#pFtp').value=profile.ftp;$('#pW').value=profile.weight;
+function renderProfile(){renderAvatars();$('#aMus').checked=SET.music;$('#aSfx').checked=SET.sfx;$('#aVol').value=SET.vol;$('#pName').value=profile.name;$('#pFtp').value=profile.ftp;$('#pW').value=profile.weight;$('#pAge').value=profile.age??'';$('#pSex').value=profile.sex??'';$('#pH').value=profile.height??'';
   $('#pWkg').textContent=`Rapporto: ${(profile.ftp/profile.weight).toFixed(2)} W/kg`;
   let lo=0;$('#zoneTbl').innerHTML=ZONES.map(z=>{const r=`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)"><span style="color:${z.c};font-weight:700">${z.n}</span><span>${Math.round(lo*profile.ftp)}${z.max<9?'–'+Math.round(z.max*profile.ftp):'+'} W</span></div>`;lo=z.max;return r}).join('');
   $('#badges').innerHTML=BADGES.map(b=>`<div class="bdg ${profile.badges[b.id]?'got':''}"><div class="ic">${b.ic}</div><b>${b.n}</b><div class="mut" style="font-size:13px">${b.d}</div></div>`).join('')}
@@ -681,7 +687,7 @@ $('#aMus').onchange=e=>setMusic(e.target.checked);$('#aSfx').onchange=e=>setSfx(
 $('#aVol').oninput=e=>{SET.vol=+e.target.value;saveSet();if(MUSIC.out&&SFX.ctx)MUSIC.out.gain.setValueAtTime(.22*SET.vol,SFX.ctx.currentTime)};
 $('#aVol').onchange=()=>{if(!MUSIC.playing&&SET.music){MUSIC.start();setTimeout(()=>MUSIC.stop(),2500)}};
 $('#pSwitch').onclick=()=>profPicker(false);
-$('#pSave').onclick=()=>{profile.name=($('#pName').value||'Rider').slice(0,20);profile.ftp=clamp(+$('#pFtp').value||150,50,600);profile.weight=clamp(+$('#pW').value||65,30,160);saveProfile();renderProfile();toastMini('Salvato ✓')};
+$('#pSave').onclick=()=>{profile.name=($('#pName').value||'Rider').slice(0,20);profile.ftp=clamp(+$('#pFtp').value||150,50,600);profile.weight=clamp(+$('#pW').value||65,30,160);profile.age=+$('#pAge').value?clamp(+$('#pAge').value,12,99):null;profile.sex=$('#pSex').value||null;profile.height=+$('#pH').value?clamp(+$('#pH').value,120,220):null;saveProfile();renderProfile();toastMini('Salvato ✓')};
 $('#pReset').onclick=()=>askConfirm('Azzerare XP, stelle, badge e storico? (FTP e peso restano)',()=>{Object.assign(profile,{xp:0,stars:{},badges:{},history:[],km:0,minutes:0});saveProfile();renderProfile()});
 let lbPeriod='all';
 function lbStats(p){const now=Date.now(),from=lbPeriod==='7'?now-7*864e5:lbPeriod==='30'?now-30*864e5:0;
@@ -707,13 +713,16 @@ function renderLeader(){
     html+=`<tr><td style="${th};text-align:left;color:var(--mut);font-weight:700">${lab}</td>${vals.map(v=>`<td style="${th};font-size:18px;${best!=null&&v===best?'color:var(--yel);font-weight:700':''}">${v==null||(k==='hr'&&!v)?'<span class="mut">—</span>':(best!=null&&v===best?'👑 ':'')+f(v)}</td>`).join('')}</tr>`}
   $('#lbTable').innerHTML=html;
 }
-const kcalOf=x=>x.kcalW!=null?x.kcalW:(x.kj!=null?x.kj:Math.round(x.avgP*x.dur/1000));
+// Keytel et al. (2005): kcal/min da FC, peso, età e sesso
+function hrKcalMin(hr,p){if(!hr||!p.age||!p.sex)return null;const w=p.weight,a=p.age;
+  const v=p.sex==='M'?(-55.0969+.6309*hr+.1988*w+.2017*a)/4.184:(-20.4022+.4472*hr-.1263*w+.074*a)/4.184;return Math.max(0,v)}
+const kcalOf=x=>x.kcalW!=null?x.kcalW:x.kcalHr!=null?x.kcalHr:(x.kj!=null?x.kj:Math.round(x.avgP*x.dur/1000));
 function renderKcalBox(){const el=$('#rKcal'),e=lastRide&&lastRide.entry;if(!el)return;
   if(!e){el.innerHTML='<span class="mut">Uscita troppo breve per essere salvata.</span>';return}
   el.innerHTML=`<label for="kcalIn" style="font-weight:700">⌚ Kcal dal tuo Garmin / Apple Watch</label>
    <div class="mut" style="font-size:14px;margin:4px 0 8px">Ferma l'allenamento sull'orologio e scrivi qui le calorie che indica: verranno usate in Storico e Classifica al posto della stima. Puoi farlo anche dopo, dallo Storico.</div>
    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="kcalIn" type="number" inputmode="numeric" min="0" max="5000" placeholder="es. 420" value="${e.kcalW??''}" style="background:#0008;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px;font:inherit;font-size:18px;width:140px">
-   <button class="btn sm" id="kcalSave">Salva</button><span class="mut" id="kcalNow">${e.kcalW!=null?'✓ salvate: '+e.kcalW+' kcal (orologio)':'Stima attuale: '+kcalOf(e)+' kcal'}</span></div>`;
+   <button class="btn sm" id="kcalSave">Salva</button><span class="mut" id="kcalNow">${e.kcalW!=null?'✓ salvate: '+e.kcalW+' kcal (orologio)':'Stima attuale: '+kcalOf(e)+' kcal ('+(e.kcalHr!=null?'dal battito':'dai watt')+')'}</span></div>`;
   $('#kcalSave').onclick=()=>{const v=Math.round(+$('#kcalIn').value);if(!(v>0)){$('#kcalIn').focus();return}e.kcalW=clamp(v,1,5000);saveProfile();renderKcalBox();toastMini('Kcal salvate ✓')}}
 function editKcal(idx){const e=profile.history[idx];if(!e)return;
   $('#modalIn').innerHTML=`<h3 style="margin-top:0">⌚ Kcal dall'orologio</h3><div class="mut">${esc(e.name)} · ${new Date(e.date).toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'})}</div>
@@ -733,6 +742,8 @@ function profPicker(first){
    <div class="field" style="margin-top:10px"><label for="nName">Nome</label><input id="nName" maxlength="20" placeholder="Nome"></div>
    <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label for="nFtp">FTP (W)</label><input id="nFtp" type="number" inputmode="numeric" value="150"></div>
    <div class="field" style="flex:1"><label for="nW">Peso (kg)</label><input id="nW" type="number" inputmode="decimal" value="60"></div></div>
+   <div style="display:flex;gap:10px"><div class="field" style="flex:1"><label for="nAge">Età</label><input id="nAge" type="number" inputmode="numeric" placeholder="es. 40"></div>
+   <div class="field" style="flex:1"><label for="nSex">Sesso</label><select id="nSex" style="background:#0008;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:12px;font:inherit;font-size:18px"><option value="F">Donna</option><option value="M">Uomo</option></select></div></div>
    <button class="btn cy" id="nAdd">Crea e usa</button></details>
    ${first?'':'<div style="margin-top:12px"><button class="btn alt" id="pClose">Chiudi</button></div>'}`;
   $('#modal').classList.add('on');
@@ -740,7 +751,7 @@ function profPicker(first){
   $$('#modalIn [data-use]').forEach(b=>b.onclick=()=>{useProf(+b.dataset.use);$('#modal').classList.remove('on')});
   $$('#modalIn [data-del]').forEach(b=>b.onclick=()=>{const i=+b.dataset.del,n=PS.list[i].name;askConfirm(`Eliminare il profilo “${esc(n)}” con tutti i suoi progressi?`,()=>{PS.list.splice(i,1);if(PS.cur>=PS.list.length||PS.cur===i)PS.cur=0;else if(PS.cur>i)PS.cur--;useProf(PS.cur);profPicker()})});
   $('#nAdd').onclick=()=>{const name=($('#nName').value||'').trim().slice(0,20);if(!name){$('#nName').focus();return}
-    PS.list.push(newProf({name,ftp:clamp(+$('#nFtp').value||150,50,600),weight:clamp(+$('#nW').value||60,30,160),col:PCOLS[PS.list.length%PCOLS.length]}));
+    PS.list.push(newProf({name,ftp:clamp(+$('#nFtp').value||150,50,600),weight:clamp(+$('#nW').value||60,30,160),age:+$('#nAge').value?clamp(+$('#nAge').value,12,99):null,sex:$('#nSex').value,col:PCOLS[PS.list.length%PCOLS.length]}));
     useProf(PS.list.length-1);$('#modal').classList.remove('on');toastMini('Ciao '+name+'! 🚴')}}
 function useProf(i){PS.cur=i;profile=PS.list[i];saveProfile();renderHome();if($('#profile').classList.contains('on'))renderProfile()}
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -1069,6 +1080,7 @@ function finish(complete){if(!G||G.ended)return;G.ended=true;hideOvl();
   if(BLE.cp){ftmsSim(0)}releaseWake();MUSIC.stop();
   const sm=G.samples,dur=sm.length,ps=sm.map(s=>s.p),avgP=Math.round(avg(ps)),hrs=sm.filter(s=>s.hr>0).map(s=>s.hr);
   let np=0;if(ps.length>=30){const r=[];let acc=0;for(let i=0;i<ps.length;i++){acc+=ps[i];if(i>=30)acc-=ps[i-30];if(i>=29)r.push((acc/30)**4)}np=Math.round(avg(r)**.25)}else np=avgP;
+  let kcalHr=null;if(profile.age&&profile.sex&&hrs.length>=dur*.8&&hrs.length>=60){let k=0;for(const h of hrs)k+=hrKcalMin(h,profile)/60;kcalHr=Math.round(k*dur/hrs.length)}
   const IF=np/profile.ftp,tss=Math.round(dur*np*IF/(profile.ftp*3600)*100),kj=Math.round(ps.reduce((a,b)=>a+b,0)/1000);
   const wk=G.wk,done=wk&&(complete||G.t>=wk.total-2);let stars=null,ftpEst=null;
   if(wk&&!wk.ramp){const zr=G.zoneSecs?G.inZone/G.zoneSecs:0;stars=done?(zr>=.88?3:zr>=.75?2:zr>=.6?1:0):0;G.zr=zr}
@@ -1080,14 +1092,14 @@ function finish(complete){if(!G||G.ended)return;G.ended=true;hideOvl();
   if(wk&&stars>prev)profile.stars[wk.id]=stars;profile.km+=km;profile.minutes+=mins;
   if(stars===3&&wk&&!wk.ramp)badge('perfect');if(mins>=60)badge('hour');if(profile.km>=100)badge('km100');if(G.fired>=30&&G.hits/G.fired>=.9)badge('sniper');
   for(const W of WORLDS)if(WORKOUTS.filter(x=>x.w===W.id).every(x=>profile.stars[x.id]>0))badge('w'+W.id);
-  if(dur>=60)profile.history.push({name:wk?wk.name:'Giro libero',date:G.startDate.getTime(),dur,km,avgP,np,hr:hrs.length?Math.round(avg(hrs)):0,hrSec:hrs.length,kj,score:G.score,stars,demo:!BLE.trainerOK});
+  if(dur>=60)profile.history.push({name:wk?wk.name:'Giro libero',date:G.startDate.getTime(),dur,km,avgP,np,hr:hrs.length?Math.round(avg(hrs)):0,hrSec:hrs.length,kj,kcalHr,score:G.score,stars,demo:!BLE.trainerOK});
   if(profile.history.length>200)profile.history.shift();saveProfile();
   lastRide={samples:sm,start:G.startDate,dist:G.dist,dur,kj,name:wk?wk.name:'Giro libero',entry:dur>=60?profile.history[profile.history.length-1]:null};renderKcalBox();
   // results UI
   $('#rTitle').textContent=wk?(wk.ramp?'TEST COMPLETATO':done?'MISSIONE COMPLETATA':'MISSIONE INTERROTTA'):'GIRO COMPLETATO';
   $('#rName').textContent=(wk?wk.name:'Giro libero')+' · '+G.startDate.toLocaleDateString('it-IT');
   $('#rStars').innerHTML=stars!=null?[0,1,2].map(i=>`<span class="${i<stars?'got':''}" style="animation-delay:${.3+i*.35}s">★</span>`).join(''):'';
-  const st=[['Punteggio',G.score.toLocaleString('it-IT')],['Tempo',fmt(dur)],['Distanza',km.toFixed(2)+' km'],['Potenza media',avgP+' W'],['NP',np+' W'],['TSS',tss],['Kcal (stima dai watt)',kj],
+  const st=[['Punteggio',G.score.toLocaleString('it-IT')],['Tempo',fmt(dur)],['Distanza',km.toFixed(2)+' km'],['Potenza media',avgP+' W'],['NP',np+' W'],['TSS',tss],...(kcalHr!=null?[['Kcal (dal battito)',kcalHr]]:[]),['Kcal (dai watt)',kj],
     ['FC media',hrs.length?Math.round(avg(hrs))+' bpm':'—'],['FC max',hrs.length?Math.max(...hrs)+' bpm':'—'],['Droni abbattuti',G.kills],['Precisione',G.fired?Math.round(G.hits/G.fired*100)+'%':'—'],['Combo max',G.maxCombo],['Boss',G.bossKills]];
   if(G.zr!=null)st.splice(1,0,['Tempo in zona',Math.round(G.zr*100)+'%']);
   $('#rStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
