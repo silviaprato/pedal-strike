@@ -138,7 +138,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <!-- ============ HOME ============ -->
 <section id="home" class="screen on"><div class="wrap">
   <div class="logo">PEDAL//STRIKE</div>
-  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v1.9</span></div>
+  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v2.0</span></div>
   <div id="btWarn"></div>
   <div class="grid g2">
     <div class="card">
@@ -261,7 +261,7 @@ button{font:inherit;color:inherit;cursor:pointer}
   <div class="top"><button class="btn alt sm" data-go="home">◀</button><h2>CLASSIFICA</h2></div>
   <div class="tabs" id="lbTabs"></div>
   <div style="overflow-x:auto" class="card"><table id="lbTable" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums"></table></div>
-  <div class="mut" style="font-size:14px;margin-top:10px">👑 = migliore per ogni voce. Medie calcolate sulle uscite di almeno 1 minuto; FC media solo sulle uscite con il cardio collegato. Kcal stimate dal lavoro meccanico (1 kJ ≈ 1 kcal). Le uscite in modalità DEMO non contano.</div>
+  <div class="mut" style="font-size:14px;margin-top:10px">👑 = migliore per ogni voce. Medie calcolate sulle uscite di almeno 1 minuto; FC media solo sulle uscite con il cardio collegato. Kcal: quelle dell'orologio (⌚) quando le hai inserite, altrimenti stimate dai watt (1 kJ ≈ 1 kcal). Le uscite in modalità DEMO non contano.</div>
 </div></section>
 
 <!-- ============ HISTORY ============ -->
@@ -308,6 +308,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <div id="rXp" style="font-size:20px;font-weight:700"></div>
     <div id="rBadges" style="margin-top:8px"></div>
     <div id="rFtp"></div>
+    <div id="rKcal" class="card" style="margin-top:12px;background:#0006"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
       <button class="btn cy" id="rTcx">⬇ Esporta TCX (Strava/Garmin)</button>
       <button class="btn" data-go="home">Menu</button>
@@ -689,7 +690,7 @@ function lbStats(p){const now=Date.now(),from=lbPeriod==='7'?now-7*864e5:lbPerio
   return{n,km:h.reduce((a,x)=>a+x.km,0),ftp:p.ftp,wkg:p.ftp/p.weight,
     avgP:sec?h.reduce((a,x)=>a+x.avgP*x.dur,0)/sec:null,
     hr:hrSec?hrH.reduce((a,x)=>a+x.hr*(x.hrSec||x.dur),0)/hrSec:null,
-    kcal:h.reduce((a,x)=>a+(x.kj!=null?x.kj:x.avgP*x.dur/1000),0),
+    kcal:h.reduce((a,x)=>a+kcalOf(x),0),
     mins:n?sec/n/60:null,tot:sec/60,score:h.reduce((a,x)=>a+(x.score||0),0),lvl:levelOf(p.xp),stars:Object.values(p.stars).reduce((a,b)=>a+b,0)}}
 function renderLeader(){
   const P=[['all','Sempre'],['30','Ultimi 30 giorni'],['7','Ultimi 7 giorni']];
@@ -706,7 +707,22 @@ function renderLeader(){
     html+=`<tr><td style="${th};text-align:left;color:var(--mut);font-weight:700">${lab}</td>${vals.map(v=>`<td style="${th};font-size:18px;${best!=null&&v===best?'color:var(--yel);font-weight:700':''}">${v==null||(k==='hr'&&!v)?'<span class="mut">—</span>':(best!=null&&v===best?'👑 ':'')+f(v)}</td>`).join('')}</tr>`}
   $('#lbTable').innerHTML=html;
 }
-function renderHistory(){$('#histList').innerHTML=profile.history.length?profile.history.slice().reverse().map(h=>`<div><span><b>${h.name}</b><br><span class="mut">${new Date(h.date).toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'})}</span></span><span>${fmt(h.dur)} · ${h.km.toFixed(1)} km · ${h.avgP} W${h.np?' (NP '+h.np+')':''}${h.hr?' · ♥'+h.hr:''}</span><span class="stars">${h.stars!=null?starStr(h.stars):''}</span><span class="orb" style="color:var(--yel)">${h.score}</span></div>`).join(''):'<div class="mut">Nessuna uscita ancora. Sali in sella!</div>'}
+const kcalOf=x=>x.kcalW!=null?x.kcalW:(x.kj!=null?x.kj:Math.round(x.avgP*x.dur/1000));
+function renderKcalBox(){const el=$('#rKcal'),e=lastRide&&lastRide.entry;if(!el)return;
+  if(!e){el.innerHTML='<span class="mut">Uscita troppo breve per essere salvata.</span>';return}
+  el.innerHTML=`<label for="kcalIn" style="font-weight:700">⌚ Kcal dal tuo Garmin / Apple Watch</label>
+   <div class="mut" style="font-size:14px;margin:4px 0 8px">Ferma l'allenamento sull'orologio e scrivi qui le calorie che indica: verranno usate in Storico e Classifica al posto della stima. Puoi farlo anche dopo, dallo Storico.</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input id="kcalIn" type="number" inputmode="numeric" min="0" max="5000" placeholder="es. 420" value="${e.kcalW??''}" style="background:#0008;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px;font:inherit;font-size:18px;width:140px">
+   <button class="btn sm" id="kcalSave">Salva</button><span class="mut" id="kcalNow">${e.kcalW!=null?'✓ salvate: '+e.kcalW+' kcal (orologio)':'Stima attuale: '+kcalOf(e)+' kcal'}</span></div>`;
+  $('#kcalSave').onclick=()=>{const v=Math.round(+$('#kcalIn').value);if(!(v>0)){$('#kcalIn').focus();return}e.kcalW=clamp(v,1,5000);saveProfile();renderKcalBox();toastMini('Kcal salvate ✓')}}
+function editKcal(idx){const e=profile.history[idx];if(!e)return;
+  $('#modalIn').innerHTML=`<h3 style="margin-top:0">⌚ Kcal dall'orologio</h3><div class="mut">${esc(e.name)} · ${new Date(e.date).toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'})}</div>
+   <div class="field" style="margin-top:12px"><label for="kcalEd">Kcal indicate da Garmin / Apple Watch</label><input id="kcalEd" type="number" inputmode="numeric" value="${e.kcalW??''}" placeholder="stima: ${kcalOf({...e,kcalW:null})}"></div>
+   <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="kcalOk">Salva</button>${e.kcalW!=null?'<button class="btn alt" id="kcalDel">Usa la stima</button>':''}<button class="btn alt" id="kcalNo">Annulla</button></div>`;
+  $('#modal').classList.add('on');const close=()=>{$('#modal').classList.remove('on');renderHistory()};
+  $('#kcalNo').onclick=close;if($('#kcalDel'))$('#kcalDel').onclick=()=>{delete e.kcalW;saveProfile();close()};
+  $('#kcalOk').onclick=()=>{const v=Math.round(+$('#kcalEd').value);if(!(v>0)){$('#kcalEd').focus();return}e.kcalW=clamp(v,1,5000);saveProfile();close()}}
+function renderHistory(){$('#histList').innerHTML=profile.history.length?profile.history.map((h,i)=>[h,i]).reverse().map(([h,i])=>`<div><span><b>${h.name}</b><br><span class="mut">${new Date(h.date).toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'})}</span></span><span>${fmt(h.dur)} · ${h.km.toFixed(1)} km · ${h.avgP} W${h.np?' (NP '+h.np+')':''}${h.hr?' · ♥'+h.hr:''}</span><button class="btn alt sm" data-kcal="${i}">🔥 ${kcalOf(h)} kcal${h.kcalW!=null?' ⌚':' ✏️'}</button><span class="stars">${h.stars!=null?starStr(h.stars):''}</span><span class="orb" style="color:var(--yel)">${h.score}</span></div>`).join(''):'<div class="mut">Nessuna uscita ancora. Sali in sella!</div>';$$('#histList [data-kcal]').forEach(b=>b.onclick=()=>editKcal(+b.dataset.kcal))}
 function profPicker(first){
   const rows=PS.list.map((p,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
     <div class="orb" style="width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:linear-gradient(135deg,${p.col},#6a2cff)">${levelOf(p.xp)}</div>
@@ -975,45 +991,57 @@ const AVATARS={
  fox:{n:'Volpe',fur:'#e8641b',head:'#e8641b'},bunny:{n:'Coniglio',fur:'#ece6f5',head:'#ece6f5'},frog:{n:'Rana',fur:'#4cd964',head:'#4cd964',shoe:'#2e9e48'},
  penguin:{n:'Pinguino',fur:'#1d1d2b',head:'#1d1d2b',shoe:'#ff9f1a',dark:1},bear:{n:'Orso',fur:'#8b5a2b',head:'#8b5a2b'},unicorn:{n:'Unicorno',fur:'#ffffff',head:'#ffffff'}};
 function drawRider(x,y,s,cr,o){o=o||{};const c=o.ctx||ctx,av=AVATARS[o.av]?o.av:'rider',A=AVATARS[av],col=o.col||'#ff3a9d',stripe=col==='#2de2ff'?'#ff3a9d':'#2de2ff',t=o.t||0;
-  c.save();c.translate(x,y);c.scale(s,s);c.lineCap='round';
+  // vista DI SPALLE: niente zip, niente occhi/musi; manubrio dietro al busto, ruota posteriore e fanalino in primo piano
+  c.save();c.translate(x,y);c.scale(s,s);c.lineCap='round';c.lineJoin='round';
   const circ=(x,y,r,f)=>{c.fillStyle=f;c.beginPath();c.arc(x,y,r,0,7);c.fill()},ell=(x,y,rx,ry,f,rot)=>{c.fillStyle=f;c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,7);c.fill()},
-        tri=(a,b,d,f)=>{c.fillStyle=f;c.beginPath();c.moveTo(...a);c.lineTo(...b);c.lineTo(...d);c.closePath();c.fill()};
+        tri=(a,b,d,f)=>{c.fillStyle=f;c.beginPath();c.moveTo(...a);c.lineTo(...b);c.lineTo(...d);c.closePath();c.fill()},
+        line=(pts,w,st)=>{c.strokeStyle=st;c.lineWidth=w;c.beginPath();c.moveTo(...pts[0]);for(const q of pts.slice(1))c.lineTo(...q);c.stroke()},
+        ring=(x,y,r)=>{c.strokeStyle='#ffffffaa';c.lineWidth=1.5;c.beginPath();c.arc(x,y,r,0,7);c.stroke()};
   ell(0,0,34,7,'rgba(0,0,0,.5)');
   if(o.od)ell(0,-70,70,95,`rgba(255,217,58,${.18+.1*Math.sin(t*10)})`);
-  // ruota
-  c.fillStyle='#0a0a12';c.fillRect(-4,-64,8,64);c.strokeStyle='#2de2ff';c.lineWidth=2;c.strokeRect(-4,-64,8,64);
-  // gambe
+  // 1) manubrio e braccia: DIETRO al busto (si vedono solo le mani alle estremità)
+  line([[-30,-100],[30,-100]],3,'#bbb');
+  for(const side of [-1,1]){line([[side*18,-122],[side*29,-110]],9,col);
+    if(A.dark)line([[side*29,-110],[side*30,-100]],9,'#ffffff99');line([[side*29,-110],[side*30,-100]],7,A.fur);
+    ell(side*30,-99,4,3.5,'#222')}
+  // 2) gambe (polpacci verso di noi)
   for(const side of [-1,1]){const ph=cr+(side<0?Math.PI:0),fy=-30+Math.sin(ph)*13,hx=side*10,hy=-84,kx=side*15,ky=(hy+fy)/2-4+Math.sin(ph)*3;
-    c.strokeStyle='#1b1b2b';c.lineWidth=11;c.beginPath();c.moveTo(hx,hy);c.lineTo(kx,ky);c.lineTo(side*8,fy);c.stroke();
-    if(A.dark){c.strokeStyle='#ffffff99';c.lineWidth=10;c.beginPath();c.moveTo(kx,ky);c.lineTo(side*8,fy);c.stroke()}c.strokeStyle=A.fur;c.lineWidth=8;c.beginPath();c.moveTo(kx,ky);c.lineTo(side*8,fy);c.stroke();
-    c.fillStyle=A.shoe||'#fff';c.fillRect(side*8-5,fy-2,10,6)}
-  // pantaloncini
-  c.fillStyle='#111';c.beginPath();c.moveTo(-16,-80);c.lineTo(16,-80);c.lineTo(14,-96);c.lineTo(-14,-96);c.fill();
-  // coda (si vede da dietro)
+    line([[hx,hy],[kx,ky]],11,'#1b1b2b');
+    if(A.dark)line([[kx,ky],[side*8,fy]],10,'#ffffff99');line([[kx,ky],[side*8,fy]],8,A.fur);
+    c.fillStyle=A.shoe||'#fff';c.fillRect(side*8-5,fy-3,10,7);c.fillStyle='#222';c.fillRect(side*8-5,fy+2,10,2)}
+  // 3) sella e pantaloncini visti da dietro
+  c.fillStyle='#111';c.beginPath();c.moveTo(-15,-80);c.lineTo(15,-80);c.lineTo(15,-96);c.lineTo(-15,-96);c.fill();
+  line([[0,-96],[0,-82]],1.5,'#333');
+  // 4) busto: schiena con tasche posteriori, niente zip
+  c.fillStyle=col;c.beginPath();c.moveTo(-16,-94);c.lineTo(16,-94);c.lineTo(21,-126);c.quadraticCurveTo(0,-131,-21,-126);c.closePath();c.fill();
+  c.fillStyle=stripe;c.fillRect(-19,-118,38,5);
+  c.fillStyle='rgba(0,0,0,.25)';for(const k of [-1,0,1])c.fillRect(k*10-4.5,-104,9,9);
+  c.fillStyle='rgba(255,255,255,.35)';c.fillRect(-16,-104,32,1.5);
+  // 5) coda (esce sotto la maglia, verso di noi)
   const wag=Math.sin(t*4)*4;
-  if(av==='cat'){c.strokeStyle=A.fur;c.lineWidth=6;c.beginPath();c.moveTo(0,-84);c.quadraticCurveTo(20+wag,-78,16+wag,-56);c.stroke();c.strokeStyle='#c46a12';c.lineWidth=6;c.beginPath();c.moveTo(16+wag,-60);c.lineTo(16+wag,-56);c.stroke()}
-  if(av==='fox'){ell(10+wag,-66,8,17,A.fur,-.4);ell(14+wag*1.2,-52,5,6,'#fff',-.4)}
-  if(av==='bunny'||av==='bear'||av==='panda')circ(0,-84,av==='bunny'?7:5,av==='bunny'?'#fff':A.fur);
-  if(av==='penguin')tri([-6,-86],[6,-86],[0,-74],A.fur);
-  if(av==='unicorn'){for(const [k,cc] of [[0,'#ff3a9d'],[1,'#ffd93a'],[2,'#2de2ff']]){c.strokeStyle=cc;c.lineWidth=4;c.beginPath();c.moveTo(-3+k*3,-86);c.quadraticCurveTo(10+k*3+wag,-76,4+k*3+wag,-58);c.stroke()}}
-  // maglia
-  c.fillStyle=col;c.beginPath();c.moveTo(-15,-94);c.lineTo(15,-94);c.lineTo(22,-126);c.lineTo(-22,-126);c.closePath();c.fill();
-  c.fillStyle=stripe;c.fillRect(-21,-114,42,5);c.fillStyle='#ffd93a';c.fillRect(-4,-126,8,32);
-  // braccia
-  for(const side of [-1,1]){c.strokeStyle=col;c.lineWidth=9;c.beginPath();c.moveTo(side*20,-122);c.lineTo(side*27,-104);c.stroke();
-    if(A.dark){c.strokeStyle='#ffffff99';c.lineWidth=9;c.beginPath();c.moveTo(side*27,-104);c.lineTo(side*24,-92);c.stroke()}c.strokeStyle=A.fur;c.lineWidth=7;c.beginPath();c.moveTo(side*27,-104);c.lineTo(side*24,-92);c.stroke()}
-  c.strokeStyle='#ccc';c.lineWidth=3;c.beginPath();c.moveTo(-28,-92);c.lineTo(28,-92);c.stroke();
-  // testa
+  if(av==='cat')line([[0,-88],[14+wag,-80],[16+wag,-64],[12+wag,-56]],6,A.fur);
+  if(av==='fox'){ell(9+wag,-70,8,17,A.fur,-.35);ell(13+wag*1.2,-56,5,6,'#fff',-.35)}
+  if(av==='bunny'||av==='bear'||av==='panda'){circ(0,-88,av==='bunny'?7:5,av==='bunny'?'#fff':A.fur);if(A.dark)ring(0,-88,5)}
+  if(av==='penguin'){tri([-6,-90],[6,-90],[0,-77],A.fur);c.strokeStyle='#ffffffaa';c.lineWidth=1.2;c.stroke()}
+  if(av==='unicorn')for(const [k,cc] of [[0,'#ff3a9d'],[1,'#ffd93a'],[2,'#2de2ff']]){c.strokeStyle=cc;c.lineWidth=4;c.beginPath();c.moveTo(-3+k*3,-90);c.quadraticCurveTo(10+k*3+wag,-80,4+k*3+wag,-60);c.stroke()}
+  // 6) ruota posteriore + reggisella + fanalino rosso: la cosa più vicina a noi
+  c.fillStyle='#0a0a12';c.fillRect(-4,-62,8,62);c.strokeStyle='#2de2ff';c.lineWidth=2;c.strokeRect(-4,-62,8,62);
+  line([[0,-62],[0,-80]],3,'#444');
+  const blink=(Math.sin(t*9)>0)?1:.35;c.fillStyle=`rgba(255,40,60,${blink})`;c.fillRect(-3,-74,6,8);
+  if(blink===1){c.fillStyle='rgba(255,40,60,.25)';c.beginPath();c.arc(0,-70,9,0,7);c.fill()}
+  // 7) testa vista da dietro (nuca, niente occhi)
   const H=A.head;
-  if(av==='rider'){circ(0,-133,9,A.fur);c.fillStyle='#fff';c.beginPath();c.ellipse(0,-138,12,9,0,Math.PI,0);c.fill();c.fillStyle='#2de2ff';c.fillRect(-12,-139,24,3)}
-  else if(av==='panda'){for(const sx of [-11,11]){circ(sx,-146,5.5,'#1a1a22');c.strokeStyle='#ffffffaa';c.lineWidth=1.5;c.beginPath();c.arc(sx,-146,5.5,0,7);c.stroke()}circ(0,-135,13,H)}
-  else if(av==='bear'){circ(-11,-146,5.5,H);circ(11,-146,5.5,H);circ(-11,-146,2.8,'#c98a4b');circ(11,-146,2.8,'#c98a4b');circ(0,-135,13,H)}
-  else if(av==='cat'){tri([-13,-140],[-11,-155],[-2,-145],H);tri([13,-140],[11,-155],[2,-145],H);tri([-10,-143],[-10,-151],[-5,-146],'#ffb8c6');tri([10,-143],[10,-151],[5,-146],'#ffb8c6');circ(0,-135,13,H);
-    c.strokeStyle='#c46a12';c.lineWidth=2;for(const k of [-4,0,4]){c.beginPath();c.moveTo(k,-147);c.lineTo(k,-140);c.stroke()}}
+  if(av==='rider'){circ(0,-131,9,'#5a3a22');c.strokeStyle='#5a3a22';c.lineWidth=6;c.beginPath();c.moveTo(0,-128);c.quadraticCurveTo(3+Math.sin(t*5)*2,-118,1,-110);c.stroke();ell(-8.5,-130,2,3,'#f3c9a8');ell(8.5,-130,2,3,'#f3c9a8');
+    c.fillStyle='#fff';c.beginPath();c.ellipse(0,-137,12.5,10,0,Math.PI,0);c.fill();c.fillRect(-12.5,-138,25,4);
+    c.fillStyle='#2de2ff';for(const k of [-6,0,6])c.fillRect(k-1.5,-145,3,7);c.fillStyle='#222';c.fillRect(-7,-134,14,2)}
+  else if(av==='panda'){for(const sx of [-11,11]){circ(sx,-146,5.5,'#1a1a22');ring(sx,-146,5.5)}circ(0,-135,13,H)}
+  else if(av==='bear'){circ(-11,-146,5.5,H);circ(11,-146,5.5,H);circ(0,-135,13,H)}
+  else if(av==='cat'){tri([-13,-140],[-11,-155],[-2,-145],H);tri([13,-140],[11,-155],[2,-145],H);circ(0,-135,13,H);
+    c.strokeStyle='#c46a12';c.lineWidth=2;for(const k of [-4,0,4]){c.beginPath();c.moveTo(k,-147);c.lineTo(k,-138);c.stroke()}}
   else if(av==='fox'){tri([-13,-139],[-12,-159],[-1,-146],H);tri([13,-139],[12,-159],[1,-146],H);tri([-12.5,-153],[-12,-159],[-9,-155],'#2b1a10');tri([12.5,-153],[12,-159],[9,-155],'#2b1a10');circ(0,-135,13,H)}
-  else if(av==='bunny'){ell(-6,-158,4.5,14,H,-.15);ell(6,-158,4.5,14,H,.15);ell(-6,-158,2,10,'#ffb8c6',-.15);ell(6,-158,2,10,'#ffb8c6',.15);circ(0,-135,13,H)}
-  else if(av==='frog'){ell(0,-133,15,11,H);circ(-8,-143,6,H);circ(8,-143,6,H);circ(-8,-144,2.4,'#1b1b2b');circ(8,-144,2.4,'#1b1b2b')}
-  else if(av==='penguin'){circ(0,-135,13,H);c.strokeStyle='#ffffffaa';c.lineWidth=1.5;c.beginPath();c.arc(0,-135,13,0,7);c.stroke()}
+  else if(av==='bunny'){ell(-6,-158,4.5,14,H,-.15);ell(6,-158,4.5,14,H,.15);circ(0,-135,13,H)}
+  else if(av==='frog'){ell(0,-133,15,11,H);circ(-8,-143,6,H);circ(8,-143,6,H)}
+  else if(av==='penguin'){circ(0,-135,13,H);ring(0,-135,13)}
   else if(av==='unicorn'){tri([-11,-141],[-10,-151],[-4,-145],H);tri([11,-141],[10,-151],[4,-145],H);circ(0,-135,13,H);tri([-3,-146],[3,-146],[0,-166],'#ffd93a');
     for(const [k,cc] of [[0,'#ff3a9d'],[1,'#b23aff'],[2,'#2de2ff']]){c.strokeStyle=cc;c.lineWidth=3.5;c.beginPath();c.moveTo(-6+k*4,-146);c.quadraticCurveTo(-4+k*4,-136,-7+k*4,-124);c.stroke()}}
   c.restore()}
@@ -1054,12 +1082,12 @@ function finish(complete){if(!G||G.ended)return;G.ended=true;hideOvl();
   for(const W of WORLDS)if(WORKOUTS.filter(x=>x.w===W.id).every(x=>profile.stars[x.id]>0))badge('w'+W.id);
   if(dur>=60)profile.history.push({name:wk?wk.name:'Giro libero',date:G.startDate.getTime(),dur,km,avgP,np,hr:hrs.length?Math.round(avg(hrs)):0,hrSec:hrs.length,kj,score:G.score,stars,demo:!BLE.trainerOK});
   if(profile.history.length>200)profile.history.shift();saveProfile();
-  lastRide={samples:sm,start:G.startDate,dist:G.dist,dur,kj,name:wk?wk.name:'Giro libero'};
+  lastRide={samples:sm,start:G.startDate,dist:G.dist,dur,kj,name:wk?wk.name:'Giro libero',entry:dur>=60?profile.history[profile.history.length-1]:null};renderKcalBox();
   // results UI
   $('#rTitle').textContent=wk?(wk.ramp?'TEST COMPLETATO':done?'MISSIONE COMPLETATA':'MISSIONE INTERROTTA'):'GIRO COMPLETATO';
   $('#rName').textContent=(wk?wk.name:'Giro libero')+' · '+G.startDate.toLocaleDateString('it-IT');
   $('#rStars').innerHTML=stars!=null?[0,1,2].map(i=>`<span class="${i<stars?'got':''}" style="animation-delay:${.3+i*.35}s">★</span>`).join(''):'';
-  const st=[['Punteggio',G.score.toLocaleString('it-IT')],['Tempo',fmt(dur)],['Distanza',km.toFixed(2)+' km'],['Potenza media',avgP+' W'],['NP',np+' W'],['TSS',tss],['Energia',kj+' kJ ≈ '+kj+' kcal'],
+  const st=[['Punteggio',G.score.toLocaleString('it-IT')],['Tempo',fmt(dur)],['Distanza',km.toFixed(2)+' km'],['Potenza media',avgP+' W'],['NP',np+' W'],['TSS',tss],['Kcal (stima dai watt)',kj],
     ['FC media',hrs.length?Math.round(avg(hrs))+' bpm':'—'],['FC max',hrs.length?Math.max(...hrs)+' bpm':'—'],['Droni abbattuti',G.kills],['Precisione',G.fired?Math.round(G.hits/G.fired*100)+'%':'—'],['Combo max',G.maxCombo],['Boss',G.bossKills]];
   if(G.zr!=null)st.splice(1,0,['Tempo in zona',Math.round(G.zr*100)+'%']);
   $('#rStats').innerHTML=st.map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('');
