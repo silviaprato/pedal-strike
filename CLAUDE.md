@@ -3,7 +3,7 @@
 Gioco arcade per allenarsi sui rulli (alternativa a Zwift), usato su iPad con il browser **Bluefy** (Safari e Chrome su iOS non supportano Web Bluetooth). Le utenti parlano italiano: interfaccia, messaggi e risposte in italiano.
 
 ## Struttura
-- Tutto è in un unico file: `index.html` (HTML + CSS + JS, senza build né dipendenze, solo Google Fonts).
+- L'app è `index.html` (HTML + CSS + JS, senza build) più `three.min.js` (three.js r128, licenza MIT, copiato dal pacchetto npm `three@0.128.0` perché i CDN non sono raggiungibili dall'ambiente di sviluppo). three.js viene caricato solo quando si sceglie un percorso 3D.
 - Pubblicazione: **GitHub Pages dal branch `main`, cartella root**. Un push su `main` va online in 1-2 minuti.
 - Versione visibile sotto il titolo nella home: `<span style="opacity:.6">· vX.Y</span>`. **Incrementala a ogni modifica pubblicata**, così le utenti possono verificare di avere l'ultima versione (ricaricando la pagina in Bluefy).
 - Messaggi di commit in italiano, con il prefisso della versione (es. `v3.1: ...`).
@@ -50,6 +50,15 @@ Gioco arcade per allenarsi sui rulli (alternativa a Zwift), usato su iPad con il
 - **Personaggi** (`AVATARS`), disegnati **di spalle** con il canvas in `drawRider()`: niente volti né zip.
 - **Musica** chiptune generata con WebAudio (`MUSIC`); il ritmo segue l'intensità.
 - **Altre schermate:** classifica tra profili, storico, export TCX, pannello 📊 "Verifica dati".
+
+## Percorsi realistici 3D (`ROUTES`, `R3`)
+- Percorsi: `arcade` (vecchio motore 2D pseudo-3D con i mondi `THEMES`), `lanzarote`, `hawaii` (motore WebGL `R3`). La scelta si fa al Giro Libero (`pickRoute`) e nella scheda dell'allenamento; resta salvata in `SET.route`.
+- Un percorso 3D è definito da dati: `km`, profilo altimetrico `prof` [[km, quota]], curve `bends` [[km, gradi, lunghezza km]], `zones` (nome, descrizione, lato del mare `sea` -1/1/0, distanza della costa, ampiezza colline, colori, densità oggetti per km), `cones` (vulcani), `turbines`, `far` (montagne lontane), `sky`. I profili sono *ispirati* ai luoghi reali, non presi da dati GPS.
+- `R3.buildCourse` genera sia il `course` di gioco (segmenti da 5 m con pendenza) sia la geometria. Il terreno è fatto a strisce ai lati della strada (colonne `COLS` fino a 1250 m), il mare è un piano con shader a y=0, il cielo è una sfera con shader. Gli oggetti sono `InstancedMesh` raggruppati ogni 1,5 km per il frustum culling.
+- Droni, fantasma, ciclista, spari ed effetti sono disegnati sul canvas 2D sopra il WebGL (`render3D` → `overlayTail`), proiettati con `R3.project`.
+- Fantasmi (`profile.ghosts[route]`) e record dei tratti (`segRec`, con id `route_kom1` per i percorsi 3D) sono separati per percorso.
+- Il tempo di gioco segue il tempo reale (`G.rdt`) anche se i fotogrammi sono pochi. C'è una riduzione automatica della risoluzione se l'iPad va lento.
+- In Chromium headless il WebGL è emulato via software (circa 1 fotogramma/s): per provare la logica disattiva il disegno con `R3.load().then(()=>{R3.init();R3.ren.render=()=>{}})` prima di partire; per gli screenshot metti `G.paused=true` e aspetta qualche secondo.
 
 ## Come provare le modifiche
 Non c'è hardware nell'ambiente di sviluppo: si prova in **modalità DEMO** con Playwright e Chromium headless.
