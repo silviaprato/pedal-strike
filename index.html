@@ -138,7 +138,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <!-- ============ HOME ============ -->
 <section id="home" class="screen on"><div class="wrap">
   <div class="logo">PEDAL//STRIKE</div>
-  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v1.6</span></div>
+  <div class="tag">Allenamenti indoor in stile arcade · ERG su rulli smart · cardio · spara con A B C D <span style="opacity:.6">· v1.8</span></div>
   <div id="btWarn"></div>
   <div class="grid g2">
     <div class="card">
@@ -168,6 +168,7 @@ button{font:inherit;color:inherit;cursor:pointer}
     <button class="btn alt" data-go="devices">📡 Dispositivi<small id="devSum">Rulli · Cardio · Controller</small></button>
     <button class="btn alt" data-go="profile">👤 Profilo<small>FTP, peso, badge</small></button>
     <button class="btn alt" data-go="history">📜 Storico<small>Le tue uscite</small></button>
+    <button class="btn alt" data-go="leader">🏆 Classifica<small>Sfida tra i profili</small></button>
   </div>
   <div class="chips" id="homeChips"></div>
 </div></section>
@@ -200,17 +201,28 @@ button{font:inherit;color:inherit;cursor:pointer}
       <div class="val"><span id="dvHr">--</span> bpm</div>
       <button class="btn" id="cHr">Connetti cardio</button>
     </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3 style="margin-top:0">🎮 Comandi al manubrio (Zwift)</h3>
+    <div class="mut" style="margin-bottom:10px">Collega ogni comando nel suo riquadro, poi tocca <b>Assegna</b> e premi il tasto su quel comando. Le scelte restano salvate. Se non sai quale dei due hai collegato, premi un tasto: lo vedi comparire accanto allo stato. Prima chiudi Zwift su iPad e telefono.</div>
+    <div class="grid g2">
     <div class="card dev">
-      <h3 style="margin:0">🎮 Controller Zwift</h3>
-      <div class="mut">Zwift Ride / Click v2 / Play (sperimentale). A→A, B→B, Y→C, Z→D</div>
-      <div class="chip" id="stZw">Non connesso</div>
-      <div class="val" id="dvZw">—</div>
-      <button class="btn" id="cZw">Connetti controller</button>
+      <h3 style="margin:0">Comando 1 <span class="mut" style="font-size:15px;font-weight:600">· sparo + intensità +</span></h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="chip" id="stZ1">Non connesso</span><span class="mut" id="dvZ1" style="font-size:15px">—</span></div>
+      <button class="btn" id="cZ1">Connetti comando 1</button>
+      <div id="mapZ1"></div>
+    </div>
+    <div class="card dev">
+      <h3 style="margin:0">Comando 2 <span class="mut" style="font-size:15px;font-weight:600">· intensità − + pausa</span></h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="chip" id="stZ2">Non connesso</span><span class="mut" id="dvZ2" style="font-size:15px">—</span></div>
+      <button class="btn" id="cZ2">Connetti comando 2</button>
+      <div id="mapZ2"></div>
+    </div>
     </div>
   </div>
   <div class="card" style="margin-top:14px">
-    <h3 style="margin-top:0">🕹️ Assegna tasti</h3>
-    <div class="mut" style="margin-bottom:6px">Funziona con controller Zwift, tastiere, telecomandi Bluetooth da manubrio, pedaliere “volta pagina” e gamepad. Tocca <b>Assegna</b> e poi premi il tasto fisico che vuoi usare. I pulsanti A B C D sullo schermo funzionano sempre.</div>
+    <h3 style="margin-top:0">🕹️ Tastiera, telecomandi e gamepad</h3>
+    <div class="mut" style="margin-bottom:6px">Per tastiere, telecomandi Bluetooth da manubrio, pedaliere “volta pagina” e gamepad. Tocca <b>Assegna</b> e poi premi il tasto fisico che vuoi usare. I pulsanti A B C D sullo schermo funzionano sempre.</div>
     <div id="mapList"></div>
     <div class="mut" style="font-size:14px;margin-top:10px">💾 Le scelte (in evidenza con ✓) si salvano da sole su questo dispositivo e restano per tutte le sessioni e per tutti i profili. Non serve riassegnarle.</div>
     <div style="margin:10px 0"><button class="btn alt sm" id="mapReset">↺ Reset tasti</button></div>
@@ -238,6 +250,14 @@ button{font:inherit;color:inherit;cursor:pointer}
     <label style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><input type="checkbox" id="aSfx"> Effetti sonori</label>
     <label for="aVol">Volume musica</label> <input type="range" id="aVol" min="0" max="1" step="0.05" style="width:220px;vertical-align:middle"></div>
   <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn alt sm" id="pSwitch">👥 Cambia / aggiungi profilo</button><button class="btn alt sm" id="pReset">Azzera progressi</button></div>
+</div></section>
+
+<!-- ============ LEADERBOARD ============ -->
+<section id="leader" class="screen"><div class="wrap">
+  <div class="top"><button class="btn alt sm" data-go="home">◀</button><h2>CLASSIFICA</h2></div>
+  <div class="tabs" id="lbTabs"></div>
+  <div style="overflow-x:auto" class="card"><table id="lbTable" style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums"></table></div>
+  <div class="mut" style="font-size:14px;margin-top:10px">👑 = migliore per ogni voce. Medie calcolate sulle uscite di almeno 1 minuto; FC media solo sulle uscite con il cardio collegato. Kcal stimate dal lavoro meccanico (1 kJ ≈ 1 kcal). Le uscite in modalità DEMO non contano.</div>
 </div></section>
 
 <!-- ============ HISTORY ============ -->
@@ -313,9 +333,10 @@ if(!PS||!Array.isArray(PS.list)||!PS.list.length){let old=null;try{old=JSON.pars
 PS.list=PS.list.map(x=>newProf(x));if(!PS.list[PS.cur])PS.cur=0;
 let profile=PS.list[PS.cur];
 const saveProfile=()=>{try{localStorage.setItem('ps_profiles',JSON.stringify(PS))}catch(e){}};
-const DEFMAP={A:['k:a','k:1','p:0','z:A'],B:['k:b','k:2','p:1','z:B'],C:['k:c','k:y','k:3','p:3','z:C'],D:['k:d','k:z','k:4','p:2','z:D'],P:['k: ','p:9'],UP:['k:arrowup','p:12','z:SU'],DN:['k:arrowdown','p:13','z:SD']};
+const DEFMAP={A:['k:a','k:1','p:0','z1:A'],B:['k:b','k:2','p:1','z1:B'],C:['k:c','k:y','k:3','p:3','z1:C'],D:['k:d','k:z','k:4','p:2','z1:D'],P:['k: ','p:9'],UP:['k:arrowup','p:12','z1:SU'],DN:['k:arrowdown','p:13','z2:SD']};
 let SET={music:true,sfx:true,vol:.7,map:null,custom:[],labels:{}};try{Object.assign(SET,JSON.parse(localStorage.getItem('ps_settings')||'{}'))}catch(e){}
 if(!SET.map)SET.map=JSON.parse(JSON.stringify(DEFMAP));if(!Array.isArray(SET.custom))SET.custom=[];if(!SET.labels)SET.labels={};
+{const mig=id=>id.replace(/^z:/,'z1:').replace(/^zr:/,'zr1:');for(const a in SET.map)SET.map[a]=SET.map[a].map(mig);SET.custom=SET.custom.map(mig);const L={};for(const k in SET.labels)L[mig(k)]=SET.labels[k].replace(/^.*· tasto/,'Comando 1 · tasto');SET.labels=L}
 const saveSet=()=>{try{localStorage.setItem('ps_settings',JSON.stringify(SET))}catch(e){}};
 const LEVELS=[0,300,800,1500,2500,4000,6000,8500,12000,16000,21000,27000,34000,42000,51000,61000,72000,85000,100000];
 const TITLES=['Recluta','Apprendista','Gregario','Gregario Elite','Passista','Cronoman','Scalatore','Scalatore Elite','Capitano','Capitano Elite','Campione','Campione Elite','Maglia Neon','Maglia Neon Elite','Leggenda','Leggenda II','Leggenda III','Mito','Immortale'];
@@ -510,60 +531,79 @@ async function onDisc(kind){
 
 /* ---- Zwift controllers (experimental) ---- */
 const ZW_SVC='00000001-19ca-4651-86e5-fa29dcdd09d1',ZW_ASYNC='00000002-19ca-4651-86e5-fa29dcdd09d1',ZW_RX='00000003-19ca-4651-86e5-fa29dcdd09d1',ZW_TX='00000004-19ca-4651-86e5-fa29dcdd09d1';
-async function connectZwift(){
+BLE.zs={1:null,2:null};
+async function connectZwift(n){
   if(!btAvailable())return btMissing();
+  const chip='#stZ'+n;
   try{
     const dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'Zwift'},{services:[ZWS]}],optionalServices:[ZW_SVC,ZWS]});
-    setChip('#stZw','wait','Connessione…');
+    const other=BLE.zs[n===1?2:1];if(other&&other.id===dev.id)throw new Error('questo comando è già collegato come Comando '+(n===1?2:1));
+    setChip(chip,'wait','Connessione…');
     const srv=await dev.gatt.connect();let svc=null;
     for(const u of [ZWS,ZW_SVC]){try{svc=await srv.getPrimaryService(u);break}catch(e){}}
     if(!svc)throw new Error('servizio Zwift non trovato');
     const asy=await svc.getCharacteristic(ZW_ASYNC),rx=await svc.getCharacteristic(ZW_RX);
-    try{const tx=await svc.getCharacteristic(ZW_TX);await tx.startNotifications();tx.addEventListener('characteristicvaluechanged',e=>log('Zwift sync ← '+hex(u8of(e.target.value))))}catch(e){}
+    try{const tx=await svc.getCharacteristic(ZW_TX);await tx.startNotifications();tx.addEventListener('characteristicvaluechanged',e=>log('Comando '+n+' sync ← '+hex(u8of(e.target.value))))}catch(e){}
     await asy.startNotifications();
-    const st={prev:{},name:dev.name||'Zwift'};asy.addEventListener('characteristicvaluechanged',e=>onZwift(u8of(e.target.value),st));
+    const st={prev:{},name:dev.name||'Zwift',slot:n};asy.addEventListener('characteristicvaluechanged',e=>onZwift(u8of(e.target.value),st));
     await writeChar(rx,new TextEncoder().encode('RideOn'));
-    BLE.zw.push(dev);dev.addEventListener('gattserverdisconnected',()=>{BLE.zw=BLE.zw.filter(d=>d!==dev);setChip('#stZw',BLE.zw.length?'on':'off',BLE.zw.length?'Connesso':'Disconnesso')});
-    setChip('#stZw','on',(dev.name||'Zwift')+(BLE.zw.length>1?` (+${BLE.zw.length-1})`:''));log('Controller connesso: '+dev.name+'. Premi un tasto per testarlo.');
-  }catch(e){btFail('Controller Zwift',e);setChip('#stZw',BLE.zw.length?'on':'off',BLE.zw.length?'Connesso':'Non connesso')}
+    BLE.zs[n]=dev;BLE.zw=[BLE.zs[1],BLE.zs[2]].filter(Boolean);
+    dev.addEventListener('gattserverdisconnected',()=>{if(BLE.zs[n]===dev)BLE.zs[n]=null;BLE.zw=[BLE.zs[1],BLE.zs[2]].filter(Boolean);setChip(chip,'off','Disconnesso')});
+    setChip(chip,'on',(dev.name||'Zwift')+' ✓');log('Comando '+n+' connesso: '+dev.name+'. Premi un tasto per testarlo.');
+  }catch(e){btFail('Comando '+n,e);setChip(chip,BLE.zs[n]?'on':'off',BLE.zs[n]?'Connesso':'Non connesso')}
 }
 function pbParse(b){const r={};let i=0;const varint=()=>{let v=0,s=0,x;do{x=b[i++];v+=(x&127)*2**s;s+=7}while(x&128&&i<b.length);return v};
   try{while(i<b.length){const key=varint(),f=Math.floor(key/8),wt=key&7;if(wt===0){const v=varint();if(!(f in r))r[f]=v}else if(wt===2){const l=varint();i+=l}else if(wt===5)i+=4;else if(wt===1)i+=8;else break}}catch(e){}return r}
 const zwLast={};let zwLogged=0;
 function onZwift(u,st){
-  const h=hex(u),t=u[0],now=Date.now(),seenBefore=zwLast[h];zwLast[h]=now;
-  if(seenBefore==null&&zwLogged<120){zwLogged++;log('Zwift ← '+h)}
-  $('#dvZw').textContent=`Ricevo dati ✓ (tipo 0x${t.toString(16).padStart(2,'0')}, ${u.length} byte)`;
+  const n=st.slot||1,h=hex(u),t=u[0],now=Date.now(),key=n+'|'+h,seenBefore=zwLast[key];zwLast[key]=now;
+  if(seenBefore==null&&zwLogged<120){zwLogged++;log('Comando '+n+' ← '+h)}
+  const out=$('#dvZ'+n);if(out&&!out.dataset.hold)out.textContent='riceve dati ✓';
+  const show=ids=>{if(!out)return;out.textContent='Premuto: '+ids.map(id=>{const a=Object.keys(SET.map).find(k=>SET.map[k].includes(id));return padName(id).replace(/^Comando \d · /,'')+(a?' → '+ACTS[a]:'')}).join(', ');out.dataset.hold=1;clearTimeout(out._t);out._t=setTimeout(()=>{delete out.dataset.hold},2500)};
   const pb=pbParse(u.subarray(1));let pr=null;
   if(t===0x23){const m=pb[1];if(m!=null){const M=m>>>0;pr={A:!(M&0x10),B:!(M&0x20),C:!(M&0x40),D:!(M&0x80),SU:!(M&0x1000),SD:!(M&0x2000)}}}
   else if(t===0x07){pr={C:pb[2]===0,D:pb[3]===0,A:pb[4]===0,B:pb[5]===0}}
   else if(t===0x37){pr={A:pb[1]===0,B:pb[2]===0}}
-  if(pr){const got=[];for(const k of ['A','B','C','D','SU','SD'])if(pr[k]&&!st.prev[k]){got.push(k);inputEvent('z:'+k)}
-    if(got.length)$('#dvZw').textContent='Premuto: '+got.map(k=>padName('z:'+k)).join(', ');st.prev=pr;return}
+  if(pr){const got=[];for(const k of ['A','B','C','D','SU','SD'])if(pr[k]&&!st.prev[k]){const id='z'+n+':'+k;got.push(id);inputEvent(id)}
+    if(got.length)show(got);st.prev=pr;return}
   if(t===0x15||t===0x19)return;
-  // formato sconosciuto: ogni messaggio nuovo puo' essere assegnato in "Assegna tasti"
-  if(h!==st.prevRaw){st.prevRaw=h;if(learning){if(seenBefore==null||seenBefore<learnT){const id='zr:'+h;if(!SET.labels[id])SET.labels[id]=st.name+' · tasto '+(Object.keys(SET.labels).length+1);inputEvent(id)}}else inputEvent('zr:'+h)}
+  // formato sconosciuto: ogni messaggio nuovo puo' essere assegnato
+  if(h!==st.prevRaw){st.prevRaw=h;const id='zr'+n+':'+h;
+    if(learning){if(learning.src==='z'+n&&(seenBefore==null||seenBefore<learnT)){if(!SET.labels[id])SET.labels[id]='Comando '+n+' · tasto '+(Object.keys(SET.labels).filter(k=>k.startsWith('zr'+n+':')).length+1);inputEvent(id);show([id])}}
+    else{inputEvent(id);if(SET.labels[id])show([id])}}
 }
 /* ---- mappatura comandi: tastiera, telecomandi, gamepad, Zwift ---- */
 const ACTS={A:'Spara A',B:'Spara B',C:'Spara C',D:'Spara D',P:'Pausa',UP:'Intensità +',DN:'Intensità −'};
 let learning=null,learnT=0;
+const srcOf=id=>{const m=/^zr?(\d):/.exec(id);return m?'z'+m[1]:'gen'};
 function padName(id){const i=id.indexOf(':'),t=id.slice(0,i),v=id.slice(i+1);
   if(t==='k')return v===' '?'Spazio':'Tasto '+(v.length===1?v.toUpperCase():v.replace('arrow','freccia '));
-  if(t==='p')return 'Gamepad '+v;if(t==='z')return 'Zwift '+({C:'Y',D:'Z',SU:'Shift +',SD:'Shift −'}[v]||v);return SET.labels[id]||('Zwift (codice '+v.slice(0,8)+'…)')}
+  if(t==='p')return 'Gamepad '+v;
+  if(/^z\d$/.test(t))return 'Comando '+t[1]+' · '+({C:'Y',D:'Z',SU:'Shift +',SD:'Shift −'}[v]||v);
+  return SET.labels[id]||('Comando '+(t[2]||'?')+' · codice '+v.slice(0,8)+'…')}
 function inputEvent(id){
-  if(learning){const a=learning;learning=null;SET.map[a]=SET.map[a].filter(x=>!SET.custom.includes(x)||x===id);for(const k in SET.map)SET.map[k]=SET.map[k].filter(x=>x!==id);SET.map[a].push(id);SET.custom=SET.custom.filter(x=>x!==id);SET.custom.push(id);SET.custom=SET.custom.filter(x=>Object.values(SET.map).some(l=>l.includes(x)));saveSet();renderMap();toastMini('✓ Salvato: '+padName(id)+' → '+ACTS[a]);SFX.beep(true);return true}
+  if(learning){if(srcOf(id)!==learning.src)return false;const {a,src}=learning;learning=null;
+    SET.map[a]=SET.map[a].filter(x=>!(SET.custom.includes(x)&&srcOf(x)===src));
+    for(const k in SET.map)SET.map[k]=SET.map[k].filter(x=>x!==id);SET.map[a].push(id);
+    SET.custom=SET.custom.filter(x=>x!==id);SET.custom.push(id);SET.custom=SET.custom.filter(x=>Object.values(SET.map).some(l=>l.includes(x)));
+    saveSet();renderMap();toastMini('✓ Salvato: '+padName(id)+' → '+ACTS[a]);SFX.beep(true);return true}
   for(const a in SET.map)if(SET.map[a].includes(id)){doAct(a);return true}return false}
 function doAct(a){if('ABCD'.includes(a))fire(a);else if(a==='P')togglePause();else if(a==='UP')bump(1);else if(a==='DN')bump(-1)}
-function renderMap(){const el=$('#mapList');if(!el)return;
-  el.innerHTML=Object.keys(ACTS).map(a=>{const mine=SET.map[a].filter(id=>SET.custom.includes(id)),def=SET.map[a].filter(id=>!SET.custom.includes(id));
-    const chip=(id,my)=>`<span class="chip ${my?'on':''}" style="margin:2px;display:inline-flex;gap:6px;align-items:center;${my?'font-size:15px;font-weight:700':'opacity:.55'}">${my?'✓ ':''}${esc(padName(id))}<button data-rm="${a}|${esc(id)}" aria-label="Rimuovi" style="background:none;border:none;padding:0 2px;font-size:15px;line-height:1">×</button></span>`;
-    return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)">
-    <b style="width:110px;color:${LCOL[a]||'var(--ink)'}">${ACTS[a]}</b>
-    <span style="flex:1;min-width:0">${mine.length?mine.map(id=>chip(id,1)).join(''):'<span class="mut" style="font-size:14px">nessun tasto tuo · </span>'}
-      <details style="display:inline"><summary class="mut" style="font-size:13px;cursor:pointer;display:inline">predefiniti (${def.length})</summary>${def.map(id=>chip(id,0)).join('')}</details></span>
-    <button class="btn ${learning===a?'cy':'alt'} sm" data-learn="${a}">${learning===a?'Premi ora il tasto… (tocca per annullare)':mine.length?'Cambia':'Assegna'}</button></div>`}).join('');
-  $$('#mapList [data-learn]').forEach(b=>b.onclick=()=>{learning=learning===b.dataset.learn?null:b.dataset.learn;learnT=Date.now();renderMap()});
-  $$('#mapList [data-rm]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=b.dataset.rm.indexOf('|'),a=b.dataset.rm.slice(0,i),id=b.dataset.rm.slice(i+1);
+const SLOTACTS={z1:['A','B','C','D','UP'],z2:['DN','P'],gen:['A','B','C','D','P','UP','DN']};
+function mapRows(src,acts){
+  const chip=(a,id,my)=>`<span class="chip ${my?'on':''}" style="margin:2px;display:inline-flex;gap:6px;align-items:center;${my?'font-size:15px;font-weight:700':'opacity:.55'}">${my?'✓ ':''}${esc(src==='gen'?padName(id):padName(id).replace(/^Comando \d · (tasto )?/,'tasto '))}<button data-rm="${a}|${esc(id)}" aria-label="Rimuovi" style="background:none;border:none;padding:0 2px;font-size:15px;line-height:1">×</button></span>`;
+  return acts.map(a=>{const ids=SET.map[a].filter(id=>srcOf(id)===src),mine=ids.filter(id=>SET.custom.includes(id)),def=ids.filter(id=>!SET.custom.includes(id)),on=learning&&learning.a===a&&learning.src===src;
+    return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--line)">
+    <b style="width:104px;color:${LCOL[a]||'var(--ink)'}">${ACTS[a]}</b>
+    <span style="flex:1;min-width:0">${mine.map(id=>chip(a,id,1)).join('')}${!mine.length&&!def.length?'<span class="mut" style="font-size:14px">nessun tasto</span>':''}
+      ${def.length?(src==='gen'?`<details style="display:inline"><summary class="mut" style="font-size:13px;cursor:pointer;display:inline">predefiniti (${def.length})</summary>${def.map(id=>chip(a,id,0)).join('')}</details>`:def.map(id=>chip(a,id,0)).join('')):''}</span>
+    <button class="btn ${on?'cy':'alt'} sm" data-learn="${a}|${src}">${on?'Premi ora il tasto…':mine.length?'Cambia':'Assegna'}</button></div>`}).join('')}
+function renderMap(){
+  const gen=$('#mapList');if(!gen)return;gen.innerHTML=mapRows('gen',SLOTACTS.gen);
+  for(const n of [1,2]){const src='z'+n,main=SLOTACTS[src],rest=SLOTACTS.gen.filter(a=>!main.includes(a));
+    $('#mapZ'+n).innerHTML=mapRows(src,main)+`<details style="margin-top:6px"><summary class="mut" style="cursor:pointer">Altre azioni per questo comando</summary>${mapRows(src,rest)}</details>`}
+  $$('[data-learn]').forEach(b=>b.onclick=()=>{const [a,src]=b.dataset.learn.split('|');learning=learning&&learning.a===a&&learning.src===src?null:{a,src};learnT=Date.now();renderMap()});
+  $$('[data-rm]').forEach(b=>b.onclick=e=>{e.stopPropagation();const i=b.dataset.rm.indexOf('|'),a=b.dataset.rm.slice(0,i),id=b.dataset.rm.slice(i+1);
     SET.map[a]=SET.map[a].filter(x=>x!==id);SET.custom=SET.custom.filter(x=>x!==id);saveSet();renderMap()})}
 const padPrev={};
 function pollPads(){try{const gps=navigator.getGamepads?navigator.getGamepads():[];for(const gp of gps){if(!gp)continue;
@@ -573,7 +613,7 @@ function btMissing(){showInfo('Bluetooth non disponibile in questo browser.\n\nS
 
 /* =================== UI =================== */
 function show(id){$$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
-  if(id==='home')renderHome();if(id==='campaign')renderCampaign();if(id==='profile')renderProfile();if(id==='history')renderHistory();if(id==='devices')renderMap();if(id!=='devices')learning=null;
+  if(id==='home')renderHome();if(id==='campaign')renderCampaign();if(id==='profile')renderProfile();if(id==='history')renderHistory();if(id==='leader')renderLeader();if(id==='devices')renderMap();if(id!=='devices')learning=null;
   if(id!=='ride')releaseWake()}
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){SFX.init();show(g.dataset.go)}});
 function renderChips(){const t=BLE.trainerOK,h=!!(BLE.hrDev&&BLE.hrDev.gatt&&BLE.hrDev.gatt.connected),z=BLE.zw.length>0;
@@ -613,7 +653,7 @@ function openWk(id){SFX.init();const wk=WORKOUTS.find(w=>w.id===id),st=wkStats(w
 $('#swProf').onclick=()=>profPicker(false);
 $('#freeBtn').onclick=()=>{SFX.init();startRide(null)};
 $('#mapReset').onclick=()=>askConfirm('Cancellare tutti i tasti che hai assegnato e tornare ai predefiniti?',()=>{SET.map=JSON.parse(JSON.stringify(DEFMAP));SET.custom=[];SET.labels={};learning=null;saveSet();renderMap();toastMini('Tasti ripristinati')});
-$('#cTrainer').onclick=()=>{log('Tocco: Connetti rulli');setChip('#stTrainer','wait','Ricerca…');connectTrainer(false)};$('#cTrainerAll').onclick=()=>{log('Tocco: mostra tutti');setChip('#stTrainer','wait','Ricerca…');connectTrainer(true)};$('#cHr').onclick=connectHR;$('#cZw').onclick=connectZwift;
+$('#cTrainer').onclick=()=>{log('Tocco: Connetti rulli');setChip('#stTrainer','wait','Ricerca…');connectTrainer(false)};$('#cTrainerAll').onclick=()=>{log('Tocco: mostra tutti');setChip('#stTrainer','wait','Ricerca…');connectTrainer(true)};$('#cHr').onclick=connectHR;$('#cZ1').onclick=()=>connectZwift(1);$('#cZ2').onclick=()=>connectZwift(2);
 
 const BADGES=[
  {id:'first',n:'Primo Sangue',d:'Abbatti il primo drone',ic:'🎯'},{id:'boss',n:'Ammazzaboss',d:'Sconfiggi un boss',ic:'👾'},
@@ -632,6 +672,30 @@ $('#aVol').onchange=()=>{if(!MUSIC.playing&&SET.music){MUSIC.start();setTimeout(
 $('#pSwitch').onclick=()=>profPicker(false);
 $('#pSave').onclick=()=>{profile.name=($('#pName').value||'Rider').slice(0,20);profile.ftp=clamp(+$('#pFtp').value||150,50,600);profile.weight=clamp(+$('#pW').value||65,30,160);saveProfile();renderProfile();toastMini('Salvato ✓')};
 $('#pReset').onclick=()=>askConfirm('Azzerare XP, stelle, badge e storico? (FTP e peso restano)',()=>{Object.assign(profile,{xp:0,stars:{},badges:{},history:[],km:0,minutes:0});saveProfile();renderProfile()});
+let lbPeriod='all';
+function lbStats(p){const now=Date.now(),from=lbPeriod==='7'?now-7*864e5:lbPeriod==='30'?now-30*864e5:0;
+  const h=p.history.filter(x=>x.date>=from&&!x.demo),n=h.length,sec=h.reduce((a,x)=>a+x.dur,0);
+  const hrH=h.filter(x=>x.hr>0),hrSec=hrH.reduce((a,x)=>a+(x.hrSec||x.dur),0);
+  return{n,km:h.reduce((a,x)=>a+x.km,0),ftp:p.ftp,wkg:p.ftp/p.weight,
+    avgP:sec?h.reduce((a,x)=>a+x.avgP*x.dur,0)/sec:null,
+    hr:hrSec?hrH.reduce((a,x)=>a+x.hr*(x.hrSec||x.dur),0)/hrSec:null,
+    kcal:h.reduce((a,x)=>a+(x.kj!=null?x.kj:x.avgP*x.dur/1000),0),
+    mins:n?sec/n/60:null,tot:sec/60,score:h.reduce((a,x)=>a+(x.score||0),0),lvl:levelOf(p.xp),stars:Object.values(p.stars).reduce((a,b)=>a+b,0)}}
+function renderLeader(){
+  const P=[['all','Sempre'],['30','Ultimi 30 giorni'],['7','Ultimi 7 giorni']];
+  $('#lbTabs').innerHTML=P.map(([k,l])=>`<button class="${k===lbPeriod?'on':''}" data-p="${k}">${l}</button>`).join('');
+  $$('#lbTabs button').forEach(b=>b.onclick=()=>{lbPeriod=b.dataset.p;renderLeader()});
+  const ps=PS.list.map(p=>({p,s:lbStats(p)}));
+  // rows: label, key, format, higher-is-better (null = no crown)
+  const R=[['Uscite','n',v=>v,1],['Km percorsi','km',v=>v.toFixed(1)+' km',1],['FTP','ftp',v=>v+' W',1],['W/kg (FTP)','wkg',v=>v.toFixed(2),1],
+    ['Watt medi','avgP',v=>Math.round(v)+' W',1],['FC media','hr',v=>Math.round(v)+' bpm',null],['Kcal bruciate','kcal',v=>Math.round(v).toLocaleString('it-IT'),1],
+    ['Durata media','mins',v=>Math.round(v)+' min',1],['Tempo totale','tot',v=>fmt(v*60),1],['Punti gioco','score',v=>v.toLocaleString('it-IT'),1],['Livello','lvl',v=>v,1],['Stelle','stars',v=>v+' ★',1]];
+  const th='padding:10px 12px;text-align:right;border-bottom:1px solid var(--line)';
+  let html=`<tr><th style="${th};text-align:left"></th>${ps.map(({p})=>`<th style="${th}"><span class="orb" style="display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;margin-right:8px;vertical-align:middle;background:linear-gradient(135deg,${p.col},#6a2cff)">${levelOf(p.xp)}</span><span style="font-size:19px">${esc(p.name)}</span></th>`).join('')}</tr>`;
+  for(const [lab,k,f,hi] of R){const vals=ps.map(x=>x.s[k]),valid=vals.filter(v=>v!=null&&v>0),best=hi&&valid.length>1?Math.max(...valid):null;
+    html+=`<tr><td style="${th};text-align:left;color:var(--mut);font-weight:700">${lab}</td>${vals.map(v=>`<td style="${th};font-size:18px;${best!=null&&v===best?'color:var(--yel);font-weight:700':''}">${v==null||(k==='hr'&&!v)?'<span class="mut">—</span>':(best!=null&&v===best?'👑 ':'')+f(v)}</td>`).join('')}</tr>`}
+  $('#lbTable').innerHTML=html;
+}
 function renderHistory(){$('#histList').innerHTML=profile.history.length?profile.history.slice().reverse().map(h=>`<div><span><b>${h.name}</b><br><span class="mut">${new Date(h.date).toLocaleString('it-IT',{dateStyle:'medium',timeStyle:'short'})}</span></span><span>${fmt(h.dur)} · ${h.km.toFixed(1)} km · ${h.avgP} W${h.np?' (NP '+h.np+')':''}${h.hr?' · ♥'+h.hr:''}</span><span class="stars">${h.stars!=null?starStr(h.stars):''}</span><span class="orb" style="color:var(--yel)">${h.score}</span></div>`).join(''):'<div class="mut">Nessuna uscita ancora. Sali in sella!</div>'}
 function profPicker(first){
   const rows=PS.list.map((p,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
@@ -930,7 +994,7 @@ $('#bSkip').onclick=()=>{if(G&&G.T&&!G.free){G.t=G.T.start+G.T.seg.d+.01}};
 $('#bEnd').onclick=()=>{if(!G||G.ended)return;const wasP=G.paused;G.paused=true;askConfirm(G.wk&&G.wk.ramp?'Terminare il test? La FTP verrà calcolata con i dati raccolti.':'Terminare la sessione?',()=>finish(!!(G.wk&&G.wk.ramp)));$('#cNo').onclick=()=>{$('#modal').classList.remove('on');if(G)G.paused=wasP}};
 $$('.pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();SFX.init();fire(b.dataset.k)}));
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key.toLowerCase(),id='k:'+k;
-  if(learning){e.preventDefault();inputEvent(id);return}
+  if(learning){e.preventDefault();if(learning.src==='gen')inputEvent(id);return}
   if(!$('#ride').classList.contains('on'))return;
   const mapped=Object.values(SET.map).some(l=>l.includes(id));
   if(k==='m'&&!mapped){setMusic(!SET.music);return}
@@ -953,7 +1017,7 @@ function finish(complete){if(!G||G.ended)return;G.ended=true;hideOvl();
   if(wk&&stars>prev)profile.stars[wk.id]=stars;profile.km+=km;profile.minutes+=mins;
   if(stars===3&&wk&&!wk.ramp)badge('perfect');if(mins>=60)badge('hour');if(profile.km>=100)badge('km100');if(G.fired>=30&&G.hits/G.fired>=.9)badge('sniper');
   for(const W of WORLDS)if(WORKOUTS.filter(x=>x.w===W.id).every(x=>profile.stars[x.id]>0))badge('w'+W.id);
-  if(dur>=60)profile.history.push({name:wk?wk.name:'Giro libero',date:G.startDate.getTime(),dur,km,avgP,np,hr:hrs.length?Math.round(avg(hrs)):0,score:G.score,stars});
+  if(dur>=60)profile.history.push({name:wk?wk.name:'Giro libero',date:G.startDate.getTime(),dur,km,avgP,np,hr:hrs.length?Math.round(avg(hrs)):0,hrSec:hrs.length,kj,score:G.score,stars,demo:!BLE.trainerOK});
   if(profile.history.length>200)profile.history.shift();saveProfile();
   lastRide={samples:sm,start:G.startDate,dist:G.dist,dur,kj,name:wk?wk.name:'Giro libero'};
   // results UI
